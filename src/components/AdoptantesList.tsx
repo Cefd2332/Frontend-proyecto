@@ -17,7 +17,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TablePagination,
   TextField,
 } from '@mui/material';
 import { FaFilePdf, FaFileExcel } from 'react-icons/fa';
@@ -36,8 +35,6 @@ function AdoptantesList() {
   const [loading, setLoading] = useState<boolean>(false);
   const [eliminandoId, setEliminandoId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [page, setPage] = useState<number>(0);
-  const [rowsPerPage, setRowsPerPage] = useState<number>(5);
   const navigate = useNavigate();
 
   const API_BASE_URL = api;
@@ -50,13 +47,11 @@ function AdoptantesList() {
     setLoading(true);
     try {
       const res = await axios.get(`${API_BASE_URL}/adoptantes`);
-      const data = res.data as any;
+      const data = res.data;
       console.log('Respuesta de la API:', data);
-      // Ajusta según la estructura real de data
+      // Verificamos que data es un arreglo
       if (Array.isArray(data)) {
         setAdoptantes(data as Adoptante[]);
-      } else if (Array.isArray(data.data)) {
-        setAdoptantes(data.data as Adoptante[]);
       } else {
         // Manejo de error si data no es un arreglo
         toast.error('La respuesta de la API no es válida.');
@@ -117,29 +112,17 @@ function AdoptantesList() {
     setSearchQuery(event.target.value.toLowerCase());
   };
 
-  const handlePageChange = (newPage: number) => {
-    setPage(newPage);
-  };
-
-  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
-  const filteredAdoptantes = Array.isArray(adoptantes)
-    ? adoptantes.filter(
-        (adoptante) =>
-          adoptante.nombre.toLowerCase().includes(searchQuery) ||
-          adoptante.email.toLowerCase().includes(searchQuery) ||
-          adoptante.telefono.toLowerCase().includes(searchQuery) ||
-          adoptante.id.toString().includes(searchQuery)
-      )
-    : [];
-
-  const paginatedAdoptantes = filteredAdoptantes.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage
+  // Filtrar los adoptantes según la búsqueda
+  const filteredAdoptantes = adoptantes.filter(
+    (adoptante) =>
+      adoptante.nombre.toLowerCase().includes(searchQuery) ||
+      adoptante.email.toLowerCase().includes(searchQuery) ||
+      adoptante.telefono.toLowerCase().includes(searchQuery) ||
+      adoptante.id.toString().includes(searchQuery)
   );
+
+  // Tomar solo los primeros 5 adoptantes
+  const displayedAdoptantes = filteredAdoptantes.slice(0, 5);
 
   return (
     <Box
@@ -230,7 +213,7 @@ function AdoptantesList() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {paginatedAdoptantes.map((adoptante) => (
+                  {displayedAdoptantes.map((adoptante) => (
                     <TableRow
                       key={adoptante.id}
                       sx={{
@@ -258,15 +241,6 @@ function AdoptantesList() {
                 </TableBody>
               </Table>
             </TableContainer>
-            <TablePagination
-              rowsPerPageOptions={[5, 10, 25]}
-              component="div"
-              count={filteredAdoptantes.length}
-              rowsPerPage={rowsPerPage}
-              page={page}
-              onPageChange={(_, newPage) => handlePageChange(newPage)}
-              onRowsPerPageChange={handleRowsPerPageChange}
-            />
           </>
         ) : (
           <Typography variant="body1" align="center" color="textSecondary">
