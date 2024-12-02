@@ -6,6 +6,7 @@ import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
 import { FaCalendarAlt } from 'react-icons/fa';
+import api from '../api/axios';
 
 moment.locale('es');
 const localizer = momentLocalizer(moment);
@@ -39,7 +40,7 @@ function CalendarioCitas() {
   useEffect(() => {
     const fetchCitas = async () => {
       try {
-        const res = await axios.get('http://localhost:8080/api/citas');
+        const res = await api.get('/citas');
         if (Array.isArray(res.data)) {
           const eventosCitas: CalendarEvent[] = res.data.map((cita: Cita) => {
             const startDate = new Date(cita.fechaCita);

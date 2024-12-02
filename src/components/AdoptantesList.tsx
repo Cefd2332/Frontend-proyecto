@@ -21,6 +21,7 @@ import {
   TextField,
 } from '@mui/material';
 import { FaFilePdf, FaFileExcel } from 'react-icons/fa';
+import api from '../api/axios';
 
 interface Adoptante {
   id: number;
@@ -39,7 +40,7 @@ function AdoptantesList() {
   const [rowsPerPage, setRowsPerPage] = useState<number>(5);
   const navigate = useNavigate();
 
-  const API_BASE_URL = 'http://localhost:8080/api';
+  const API_BASE_URL = api;
 
   useEffect(() => {
     fetchAdoptantes();

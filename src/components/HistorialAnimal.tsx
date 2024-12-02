@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 import { saveAs } from 'file-saver';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import api from '../api/axios';
 
 interface Animal {
   id: number;
@@ -34,7 +35,7 @@ function HistorialAnimal() {
   const [animal, setAnimal] = useState<Animal | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
-  const API_BASE_URL = 'http://localhost:8080/api';
+  const API_BASE_URL = api ;
 
   useEffect(() => {
     const fetchHistorial = async () => {

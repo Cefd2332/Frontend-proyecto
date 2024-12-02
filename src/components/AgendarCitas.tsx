@@ -13,6 +13,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import api from '../api/axios';
 
 interface Animal {
   id: number;
@@ -32,7 +33,7 @@ function AgendarCita() {
   useEffect(() => {
     const fetchAnimales = async () => {
       try {
-        const res = await axios.get<Animal[]>('http://localhost:8080/api/animales');
+        const res = await api.get<Animal[]>('/animales');
         setAnimales(res.data);
         if (id) {
           setAnimalId(id);
@@ -57,7 +58,7 @@ function AgendarCita() {
         return;
       }
 
-      await axios.post('http://localhost:8080/api/citas', {
+      await api.post('/citas', {
         animalId: parseInt(animalId),
         fechaCita: fechaCitaISO,
         motivo,

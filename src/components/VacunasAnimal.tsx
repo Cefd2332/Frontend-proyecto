@@ -19,6 +19,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { FaFilePdf, FaFileExcel } from 'react-icons/fa';
+import api from '../api/axios';
 
 interface Vacuna {
   id: number;
@@ -37,7 +38,7 @@ function VacunasAnimal() {
   const [agregando, setAgregando] = useState<boolean>(false);
   const [eliminando, setEliminando] = useState<number | null>(null);
 
-  const API_BASE_URL = 'http://localhost:8080/api';
+  const API_BASE_URL = api;
 
   useEffect(() => {
     const fetchVacunas = async () => {

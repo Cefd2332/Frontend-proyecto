@@ -21,6 +21,7 @@ import {
   TextField,
 } from '@mui/material';
 import { FaFilePdf, FaFileExcel } from 'react-icons/fa';
+import api from '../api/axios';
 
 interface Animal {
   id: number;
@@ -45,7 +46,7 @@ function Dashboard() {
     const fetchAnimales = async () => {
       setLoading(true);
       try {
-        const res = await axios.get<Animal[]>('http://localhost:8080/api/animales');
+        const res = await api.get<Animal[]>('/animales');
         setAnimales(res.data);
       } catch (error) {
         console.error('Error al obtener animales', error);

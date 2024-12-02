@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import EditarCita from './EditarCitas';
 import { FaEdit, FaTrash, FaEnvelope } from 'react-icons/fa';
@@ -11,6 +10,7 @@ import {
   Paper,
   Grid,
 } from '@mui/material';
+import api from '../api/axios';
 
 interface Adoptante {
   id: number;
@@ -50,16 +50,16 @@ const DetallesCita = () => {
   useEffect(() => {
     const fetchCita = async () => {
       try {
-        const resCita = await axios.get(`http://localhost:8080/api/citas/${id}`);
+        const resCita = await api.get(`/citas/${id}`);
         const citaData: Cita = resCita.data as Cita;
         setCita(citaData);
 
-        const resAnimal = await axios.get(`http://localhost:8080/api/animales/${citaData.animalId}`);
+        const resAnimal = await api.get(`/animales/${citaData.animalId}`);
         const animalData: Animal = resAnimal.data as Animal;
         setAnimal(animalData);
 
         if (animalData.adoptanteId) {
-          const resAdoptante = await axios.get(`http://localhost:8080/api/adoptantes/${animalData.adoptanteId}`);
+          const resAdoptante = await api.get(`/adoptantes/${animalData.adoptanteId}`);
           const adoptanteData: Adoptante = resAdoptante.data as Adoptante;
           setAdoptante(adoptanteData);
         }
@@ -76,7 +76,7 @@ const DetallesCita = () => {
 
   const handleEliminarCita = async () => {
     try {
-      await axios.delete(`http://localhost:8080/api/citas/${id}`);
+      await api.delete(`/citas/${id}`);
       toast.success('Cita eliminada exitosamente.');
       navigate('/dashboard');
     } catch (error) {

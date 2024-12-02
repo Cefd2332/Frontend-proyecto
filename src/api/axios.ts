@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:8080/api', // Asegúrate de que esta es tu URL base
+  baseURL: 'https://petracker.online/api', // Asegúrate de que esta es tu URL base
   headers: {
     'Content-Type': 'application/json',
   },

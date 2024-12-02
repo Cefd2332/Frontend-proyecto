@@ -14,6 +14,7 @@ import {
   Radio,
   Typography,
 } from '@mui/material';
+import api from '../api/axios';
 
 function EditAnimal() {
   const { id } = useParams<{ id: string }>();
@@ -28,7 +29,7 @@ function EditAnimal() {
   const [adoptanteId, setAdoptanteId] = useState('');
   const [adoptantes, setAdoptantes] = useState<{ id: string; nombre: string }[]>([]);
 
-  const API_BASE_URL = 'http://localhost:8080/api';
+  const API_BASE_URL = api;
 
   useEffect(() => {
     const fetchAnimalData = async () => {
