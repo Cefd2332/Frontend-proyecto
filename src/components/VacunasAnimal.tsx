@@ -6,7 +6,18 @@ import { parseISO, format } from 'date-fns';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { saveAs } from 'file-saver';
-import { Box, Button, Typography, TextField, Select, MenuItem, List, ListItem, ListItemText } from '@mui/material';
+import {
+  Box,
+  Button,
+  Typography,
+  TextField,
+  Select,
+  MenuItem,
+  List,
+  ListItem,
+  ListItemText,
+  CircularProgress,
+} from '@mui/material';
 import { FaFilePdf, FaFileExcel } from 'react-icons/fa';
 
 interface Vacuna {
@@ -71,7 +82,8 @@ function VacunasAnimal() {
 
     setAgregando(true);
     try {
-      const nombreFinal = nombreSeleccionado === 'Otra' ? nombrePersonalizado.trim() : nombreSeleccionado;
+      const nombreFinal =
+        nombreSeleccionado === 'Otra' ? nombrePersonalizado.trim() : nombreSeleccionado;
 
       const nuevaVacuna = {
         nombre: nombreFinal,
@@ -129,6 +141,27 @@ function VacunasAnimal() {
   };
 
   const opcionesNombre = ['Vacuna Común', 'Vacuna Triple Viral', 'Vacuna Anti-Rabia', 'Otra'];
+
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          maxWidth: '800px',
+          margin: 'auto',
+          padding: 4,
+          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+          boxShadow: 3,
+          borderRadius: 2,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '300px',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Box
@@ -247,7 +280,10 @@ function VacunasAnimal() {
               >
                 <ListItemText
                   primary={`Nombre: ${vacuna.nombre}`}
-                  secondary={`Fecha de Aplicación: ${format(parseISO(vacuna.fechaAplicacion), 'dd/MM/yyyy')}`}
+                  secondary={`Fecha de Aplicación: ${format(
+                    parseISO(vacuna.fechaAplicacion),
+                    'dd/MM/yyyy'
+                  )}`}
                 />
                 <Button
                   variant="contained"

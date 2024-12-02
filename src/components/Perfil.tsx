@@ -7,13 +7,13 @@ import { FaLock, FaUser } from 'react-icons/fa';
 import { UsuarioResponseDto } from '../types/UsuarioResponseDto';
 
 function Perfil() {
-  const [activeTab, setActiveTab] = useState('perfil'); // Tab activa
-  const [profile, setProfile] = useState<UsuarioResponseDto | null>(null); // Información actual
+  const [activeTab, setActiveTab] = useState('perfil');
+  const [profile, setProfile] = useState<UsuarioResponseDto | null>(null);
   const [formValues, setFormValues] = useState({
     nombre: '',
     email: '',
     direccion: '',
-  }); // Valores del formulario
+  });
   const [passwordActual, setPasswordActual] = useState('');
   const [nuevaPassword, setNuevaPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -117,7 +117,8 @@ function Perfil() {
     }
   };
 
-  if (!profile) return <p className="text-gray-600 text-center mt-6">Cargando perfil...</p>;
+  if (!profile)
+    return <p className="text-gray-600 text-center mt-6">Cargando perfil...</p>;
 
   return (
     <div className="p-8 bg-white shadow-lg rounded-lg max-w-4xl mx-auto mt-6">
@@ -132,20 +133,22 @@ function Perfil() {
             activeTab === 'perfil'
               ? 'bg-[#0288D1] text-white'
               : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-          } rounded`}
+          } rounded flex items-center space-x-2`}
           onClick={() => setActiveTab('perfil')}
         >
-          Información del Perfil
+          <FaUser />
+          <span>Información del Perfil</span>
         </button>
         <button
           className={`py-2 px-4 ${
             activeTab === 'seguridad'
               ? 'bg-[#0288D1] text-white'
               : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-          } rounded`}
+          } rounded flex items-center space-x-2`}
           onClick={() => setActiveTab('seguridad')}
         >
-          Seguridad
+          <FaLock />
+          <span>Seguridad</span>
         </button>
       </div>
 
@@ -191,8 +194,9 @@ function Perfil() {
 
       {activeTab === 'seguridad' && (
         <div>
-          <h2 className="text-xl font-semibold text-gray-700 mb-4">
-            Cambiar Contraseña
+          <h2 className="text-xl font-semibold text-gray-700 mb-4 flex items-center space-x-2">
+            <FaLock className="text-gray-600" />
+            <span>Cambiar Contraseña</span>
           </h2>
           <div className="flex flex-col space-y-4">
             <input

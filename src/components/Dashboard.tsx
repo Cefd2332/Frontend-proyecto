@@ -89,7 +89,7 @@ function Dashboard() {
     setSearchQuery(event.target.value.toLowerCase());
   };
 
-  const handlePageChange = (event: unknown, newPage: number) => {
+  const handlePageChange = (_event: unknown, newPage: number) => {
     setPage(newPage);
   };
 
