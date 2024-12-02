@@ -1,4 +1,3 @@
-// src/components/VacunasAnimal.tsx
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams } from 'react-router-dom';
@@ -7,6 +6,8 @@ import { parseISO, format } from 'date-fns';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { saveAs } from 'file-saver';
+import { Box, Button, Typography, TextField, Select, MenuItem, List, ListItem, ListItemText } from '@mui/material';
+import { FaFilePdf, FaFileExcel } from 'react-icons/fa';
 
 interface Vacuna {
   id: number;
@@ -54,7 +55,6 @@ function VacunasAnimal() {
       (nombreSeleccionado === 'Otra' && !nombrePersonalizado.trim()) ||
       !fechaAplicacion
     ) {
-
       toast.error('Por favor, complete todos los campos.');
       return;
     }
@@ -65,7 +65,6 @@ function VacunasAnimal() {
     fechaSeleccionada.setHours(0, 0, 0, 0);
 
     if (fechaSeleccionada > ahora) {
-
       toast.error('La fecha de aplicación no puede ser una fecha futura.');
       return;
     }
@@ -132,125 +131,138 @@ function VacunasAnimal() {
   const opcionesNombre = ['Vacuna Común', 'Vacuna Triple Viral', 'Vacuna Anti-Rabia', 'Otra'];
 
   return (
-    <div className="p-8 max-w-4xl mx-auto bg-white shadow-md rounded-lg">
-      <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
+    <Box
+      sx={{
+        maxWidth: '800px',
+        margin: 'auto',
+        padding: 4,
+        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+        boxShadow: 3,
+        borderRadius: 2,
+      }}
+    >
+      <Typography
+        variant="h5"
+        fontWeight="bold"
+        color="#6c757d"
+        align="center"
+        sx={{ mb: 3 }}
+      >
         Vacunas del Animal
-      </h2>
+      </Typography>
 
-      {loading ? (
-        <p className="text-center text-gray-600">Cargando vacunas...</p>
-      ) : (
-        <>
-          <div className="mb-8">
-            <h3 className="text-xl font-semibold mb-4 text-blue-500">Agregar Nueva Vacuna</h3>
-            <div className="flex flex-col space-y-4">
-              <div>
-                <label htmlFor="nombreVacuna" className="block text-gray-700 font-semibold mb-2">
-                  Nombre de la Vacuna
-                </label>
-                <select
-                  id="nombreVacuna"
-                  value={nombreSeleccionado}
-                  onChange={(e) => setNombreSeleccionado(e.target.value)}
-                  className="w-full p-3 border rounded focus:border-blue-500 focus:ring focus:ring-blue-200"
-                >
-                  {opcionesNombre.map((opcion) => (
-                    <option key={opcion} value={opcion}>
-                      {opcion}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {nombreSeleccionado === 'Otra' && (
-                <div>
-                  <label htmlFor="nombrePersonalizado" className="block text-gray-700 font-semibold mb-2">
-                    Nombre Personalizado
-                  </label>
-                  <input
-                    type="text"
-                    id="nombrePersonalizado"
-                    placeholder="Escribe el nombre de la vacuna"
-                    value={nombrePersonalizado}
-                    onChange={(e) => setNombrePersonalizado(e.target.value)}
-                    className="w-full p-3 border rounded focus:border-blue-500 focus:ring focus:ring-blue-200"
-                  />
-                </div>
-              )}
-              <div>
-                <label htmlFor="fechaAplicacion" className="block text-gray-700 font-semibold mb-2">
-                  Fecha de Aplicación
-                </label>
-                <input
-                  type="date"
-                  id="fechaAplicacion"
-                  value={fechaAplicacion}
-                  onChange={(e) => setFechaAplicacion(e.target.value)}
-                  className="w-full p-3 border rounded focus:border-blue-500 focus:ring focus:ring-blue-200"
-                />
-              </div>
-              <button
-                onClick={handleAgregarVacuna}
-                disabled={agregando}
-                className={`bg-blue-500 text-white py-2 px-4 rounded ${
-                  agregando ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'
-                } focus:ring focus:ring-blue-300`}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
+        <Button
+          variant="contained"
+          startIcon={<FaFilePdf />}
+          sx={{
+            backgroundColor: '#D32F2F',
+            color: '#fff',
+            '&:hover': { backgroundColor: '#B71C1C' },
+          }}
+          onClick={exportToPDF}
+        >
+          Exportar a PDF
+        </Button>
+        <Button
+          variant="contained"
+          startIcon={<FaFileExcel />}
+          sx={{
+            backgroundColor: '#4CAF50',
+            color: '#fff',
+            '&:hover': { backgroundColor: '#388E3C' },
+          }}
+          onClick={exportToExcel}
+        >
+          Exportar a Excel
+        </Button>
+      </Box>
+
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h6" color="#6c757d" fontWeight="bold" sx={{ mb: 2 }}>
+          Agregar Nueva Vacuna
+        </Typography>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Select
+            value={nombreSeleccionado}
+            onChange={(e) => setNombreSeleccionado(e.target.value)}
+            fullWidth
+          >
+            {opcionesNombre.map((opcion) => (
+              <MenuItem key={opcion} value={opcion}>
+                {opcion}
+              </MenuItem>
+            ))}
+          </Select>
+          {nombreSeleccionado === 'Otra' && (
+            <TextField
+              placeholder="Nombre Personalizado"
+              value={nombrePersonalizado}
+              onChange={(e) => setNombrePersonalizado(e.target.value)}
+              fullWidth
+            />
+          )}
+          <TextField
+            type="date"
+            value={fechaAplicacion}
+            onChange={(e) => setFechaAplicacion(e.target.value)}
+            fullWidth
+          />
+          <Button
+            variant="contained"
+            sx={{
+              backgroundColor: '#0288D1',
+              color: '#fff',
+              '&:hover': { backgroundColor: '#0277BD' },
+            }}
+            onClick={handleAgregarVacuna}
+            disabled={agregando}
+          >
+            {agregando ? 'Agregando...' : 'Agregar Vacuna'}
+          </Button>
+        </Box>
+      </Box>
+
+      <Box>
+        <Typography variant="h6" color="#6c757d" fontWeight="bold" sx={{ mb: 2 }}>
+          Lista de Vacunas
+        </Typography>
+        {vacunas.length === 0 ? (
+          <Typography align="center" color="textSecondary">
+            No hay vacunas registradas para este animal.
+          </Typography>
+        ) : (
+          <List>
+            {vacunas.map((vacuna) => (
+              <ListItem
+                key={vacuna.id}
+                sx={{
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  marginBottom: '8px',
+                  padding: '8px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                }}
               >
-                {agregando ? 'Agregando...' : 'Agregar Vacuna'}
-              </button>
-            </div>
-          </div>
-
-          <div className="flex justify-between mb-6">
-            <button
-              className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded shadow"
-              onClick={exportToPDF}
-            >
-              Exportar a PDF
-            </button>
-            <button
-              className="bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded shadow"
-              onClick={exportToExcel}
-            >
-              Exportar a Excel
-            </button>
-          </div>
-
-          <div>
-            <h3 className="text-xl font-semibold mb-4 text-blue-500">Lista de Vacunas</h3>
-            {vacunas.length === 0 ? (
-              <p className="text-center text-gray-600">No hay vacunas registradas para este animal.</p>
-            ) : (
-              <ul className="space-y-4">
-                {vacunas.map((vacuna) => (
-                  <li key={vacuna.id} className="border border-gray-200 p-4 rounded-lg">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p>
-                          <strong>Nombre:</strong> {vacuna.nombre}
-                        </p>
-                        <p>
-                          <strong>Fecha de Aplicación:</strong>{' '}
-                          {format(parseISO(vacuna.fechaAplicacion), 'dd/MM/yyyy')}
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => handleEliminarVacuna(vacuna.id)}
-                        disabled={eliminando === vacuna.id}
-                        className={`bg-red-500 text-white py-2 px-3 rounded ${
-                          eliminando === vacuna.id ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-600'
-                        }`}
-                      >
-                        {eliminando === vacuna.id ? 'Eliminando...' : 'Eliminar'}
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </>
-      )}
-    </div>
+                <ListItemText
+                  primary={`Nombre: ${vacuna.nombre}`}
+                  secondary={`Fecha de Aplicación: ${format(parseISO(vacuna.fechaAplicacion), 'dd/MM/yyyy')}`}
+                />
+                <Button
+                  variant="contained"
+                  color="error"
+                  onClick={() => handleEliminarVacuna(vacuna.id)}
+                  disabled={eliminando === vacuna.id}
+                >
+                  {eliminando === vacuna.id ? 'Eliminando...' : 'Eliminar'}
+                </Button>
+              </ListItem>
+            ))}
+          </List>
+        )}
+      </Box>
+    </Box>
   );
 }
 

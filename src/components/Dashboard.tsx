@@ -5,6 +5,21 @@ import { toast } from 'react-toastify';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { saveAs } from 'file-saver';
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Paper,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TablePagination,
+  TextField,
+} from '@mui/material';
 import { FaFilePdf, FaFileExcel } from 'react-icons/fa';
 
 interface Animal {
@@ -14,13 +29,16 @@ interface Animal {
   edad: number;
   unidadEdad: string;
   estadoSalud: string;
-  genero?: string; // Campo para el género
+  genero?: string;
   adoptanteId: number;
 }
 
 function Dashboard() {
   const [animales, setAnimales] = useState<Animal[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [page, setPage] = useState<number>(0);
+  const [rowsPerPage, setRowsPerPage] = useState<number>(5);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -67,123 +85,207 @@ function Dashboard() {
     toast.success('Archivo Excel exportado exitosamente.');
   };
 
+  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(event.target.value.toLowerCase());
+  };
+
+  const handlePageChange = (event: unknown, newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const handleEliminarAnimal = async (id: number) => {
+    if (window.confirm('¿Estás seguro de que deseas eliminar este animal? Esta acción no se puede deshacer.')) {
+      try {
+        await axios.delete(`http://localhost:8080/api/animales/${id}`);
+        setAnimales((prev) => prev.filter((animal) => animal.id !== id));
+        toast.success('Animal eliminado correctamente.');
+      } catch (error) {
+        console.error('Error al eliminar el animal', error);
+        toast.error('Error al eliminar el animal. Por favor, intenta nuevamente.');
+      }
+    }
+  };
+
+  const filteredAnimals = animales.filter(
+    (animal) =>
+      animal.nombre.toLowerCase().includes(searchQuery) ||
+      animal.especie.toLowerCase().includes(searchQuery) ||
+      animal.estadoSalud.toLowerCase().includes(searchQuery)
+  );
+
+  const paginatedAnimals = filteredAnimals.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
   return (
-    <div className="p-8 max-w-7xl mx-auto bg-white rounded-lg shadow-lg">
-      <h1 className="text-4xl font-bold text-gray-800 mb-8 text-center">
-        Animales en Atención
-      </h1>
-
-      {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <svg
-            className="animate-spin h-10 w-10 text-blue-500"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            ></circle>
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8v8H4z"
-            ></path>
-          </svg>
-        </div>
-      ) : (
-        <>
-          <div className="flex justify-between items-center mb-8">
-            <div className="flex space-x-4">
-              <button
-                className="flex items-center bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded shadow transition duration-300"
-                onClick={exportToPDF}
+    <Box
+      sx={{
+        padding: 3,
+        background: 'linear-gradient(to bottom, #B3E5FC, #FFFFFF)',
+        minHeight: '100vh',
+      }}
+    >
+      <Paper
+        sx={{
+          maxWidth: '1200px',
+          margin: 'auto',
+          padding: 4,
+          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+          boxShadow: 3,
+          borderRadius: 2,
+        }}
+      >
+        <Typography variant="h4" align="center" gutterBottom color="textSecondary">
+          Animales en Atención
+        </Typography>
+        <Box sx={{ marginBottom: 2 }}>
+          <TextField
+            fullWidth
+            label="Buscar por nombre, especie o estado de salud"
+            variant="outlined"
+            value={searchQuery}
+            onChange={handleSearch}
+          />
+        </Box>
+        {loading ? (
+          <Box display="flex" justifyContent="center" alignItems="center" sx={{ height: 300 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+              <Box>
+                <Button
+                  variant="contained"
+                  startIcon={<FaFilePdf />}
+                  onClick={exportToPDF}
+                  sx={{
+                    backgroundColor: '#D32F2F',
+                    color: '#fff',
+                    marginRight: 2,
+                    '&:hover': { backgroundColor: '#B71C1C' },
+                  }}
+                >
+                  Exportar a PDF
+                </Button>
+                <Button
+                  variant="contained"
+                  startIcon={<FaFileExcel />}
+                  onClick={exportToExcel}
+                  sx={{
+                    backgroundColor: '#4CAF50',
+                    color: '#fff',
+                    '&:hover': { backgroundColor: '#388E3C' },
+                  }}
+                >
+                  Exportar a Excel
+                </Button>
+              </Box>
+              <Button
+                variant="contained"
+                onClick={() => navigate('/registrar-animal')}
+                sx={{
+                  backgroundColor: '#0288D1',
+                  color: '#fff',
+                  '&:hover': { backgroundColor: '#0277BD' },
+                }}
               >
-                <FaFilePdf className="mr-2" />
-                Exportar a PDF
-              </button>
-              <button
-                className="flex items-center bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-4 rounded shadow transition duration-300"
-                onClick={exportToExcel}
-              >
-                <FaFileExcel className="mr-2" />
-                Exportar a Excel
-              </button>
-            </div>
-            <button
-              className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded shadow transition duration-300"
-              onClick={() => navigate('/registrar-animal')}
-            >
-              Registrar Nuevo Animal
-            </button>
-          </div>
-
-          {animales.length > 0 ? (
-            <table className="min-w-full bg-gray-100 rounded-lg overflow-hidden shadow-lg">
-              <thead className="bg-gray-200 text-gray-700">
-                <tr>
-                  <th className="py-4 px-6 text-left font-semibold">Nombre</th>
-                  <th className="py-4 px-6 text-left font-semibold">Especie</th>
-                  <th className="py-4 px-6 text-left font-semibold">Edad</th>
-                  <th className="py-4 px-6 text-left font-semibold">Género</th>
-                  <th className="py-4 px-6 text-left font-semibold">Estado de Salud</th>
-                  <th className="py-4 px-6 text-left font-semibold">ID Cliente</th>
-                  <th className="py-4 px-6 text-center font-semibold">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {animales.map((animal, index) => (
-                  <tr
-                    key={animal.id}
-                    className={`border-b ${
-                      index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                    } hover:bg-gray-100`}
-                  >
-                    <td className="py-4 px-6">{animal.nombre}</td>
-                    <td className="py-4 px-6">{animal.especie}</td>
-                    <td className="py-4 px-6">{`${animal.edad} ${animal.unidadEdad}`}</td>
-                    <td className="py-4 px-6">{animal.genero || 'No especificado'}</td>
-                    <td className="py-4 px-6">{animal.estadoSalud}</td>
-                    <td className="py-4 px-6">{animal.adoptanteId || 'No asignado'}</td>
-                    <td className="py-4 px-6 text-center">
-                      <div className="flex justify-center items-center space-x-2">
-                        <button
-                          className="bg-blue-500 hover:bg-blue-600 text-white py-1 px-4 rounded shadow transition duration-300"
-                          onClick={() => navigate(`/animales/${animal.id}/vacunas`)}
-                        >
-                          Vacunas
-                        </button>
-                        <button
-                          className="bg-green-500 hover:bg-green-600 text-white py-1 px-4 rounded shadow transition duration-300"
-                          onClick={() => navigate(`/agendar-cita/${animal.id}`)}
-                        >
-                          Cita
-                        </button>
-                        <button
-                          className="bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-4 rounded shadow transition duration-300"
-                          onClick={() => navigate(`/editar-animal/${animal.id}`)}
-                        >
-                          Editar
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <p className="text-gray-600 text-center text-lg mt-4">
-              No hay animales registrados.
-            </p>
-          )}
-        </>
-      )}
-    </div>
+                Registrar Nuevo Animal
+              </Button>
+            </Box>
+            <TableContainer component={Paper} sx={{ backgroundColor: 'rgba(255, 255, 255, 0.9)' }}>
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ backgroundColor: '#0288D1' }}>
+                    <TableCell sx={{ color: '#ffffff', fontWeight: 'bold' }}>Nombre</TableCell>
+                    <TableCell sx={{ color: '#ffffff', fontWeight: 'bold' }}>Especie</TableCell>
+                    <TableCell sx={{ color: '#ffffff', fontWeight: 'bold' }}>Edad</TableCell>
+                    <TableCell sx={{ color: '#ffffff', fontWeight: 'bold' }}>Género</TableCell>
+                    <TableCell sx={{ color: '#ffffff', fontWeight: 'bold' }}>Estado de Salud</TableCell>
+                    <TableCell sx={{ color: '#ffffff', fontWeight: 'bold' }}>ID Cliente</TableCell>
+                    <TableCell sx={{ color: '#ffffff', fontWeight: 'bold' }}>Acciones</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {paginatedAnimals.map((animal) => (
+                    <TableRow
+                      key={animal.id}
+                      sx={{
+                        '&:nth-of-type(odd)': { backgroundColor: 'rgba(0, 0, 0, 0.04)' },
+                        '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.08)' },
+                      }}
+                    >
+                      <TableCell>{animal.nombre}</TableCell>
+                      <TableCell>{animal.especie}</TableCell>
+                      <TableCell>{`${animal.edad} ${animal.unidadEdad}`}</TableCell>
+                      <TableCell>{animal.genero || 'No especificado'}</TableCell>
+                      <TableCell>{animal.estadoSalud}</TableCell>
+                      <TableCell>{animal.adoptanteId || 'No asignado'}</TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                          <Button
+                            variant="outlined"
+                            color="primary"
+                            size="small"
+                            onClick={() => navigate(`/animales/${animal.id}/vacunas`)}
+                          >
+                            Vacunas
+                          </Button>
+                          <Button
+                            variant="outlined"
+                            color="success"
+                            size="small"
+                            onClick={() => navigate(`/agendar-cita/${animal.id}`)}
+                          >
+                            Cita
+                          </Button>
+                          <Button
+                            variant="outlined"
+                            color="warning"
+                            size="small"
+                            onClick={() => navigate(`/editar-animal/${animal.id}`)}
+                          >
+                            Editar
+                          </Button>
+                          <Button
+                            variant="outlined"
+                            color="error"
+                            size="small"
+                            onClick={() => handleEliminarAnimal(animal.id)}
+                            sx={{
+                              color: '#D32F2F',
+                              borderColor: '#D32F2F',
+                              '&:hover': {
+                                backgroundColor: 'rgba(211, 47, 47, 0.1)',
+                                borderColor: '#B71C1C',
+                              },
+                            }}
+                          >
+                            Eliminar
+                          </Button>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            <TablePagination
+              rowsPerPageOptions={[5, 10, 25]}
+              component="div"
+              count={filteredAnimals.length}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={handlePageChange}
+              onRowsPerPageChange={handleRowsPerPageChange}
+            />
+          </>
+        )}
+      </Paper>
+    </Box>
   );
 }
 

@@ -1,8 +1,6 @@
-// src/components/EditarCita.tsx
 import { useState } from 'react';
-import api from '../api/axios'; // Asegúrate de tener una instancia configurada de Axios
-import { toast } from 'react-toastify'; // Para notificaciones elegantes
-import 'react-toastify/dist/ReactToastify.css';
+import api from '../api/axios';
+import { toast } from 'react-toastify';
 
 interface Cita {
   id: number;
@@ -20,11 +18,10 @@ interface EditarCitaProps {
 }
 
 function EditarCita({ cita, onActualizar, onCancelar }: EditarCitaProps) {
-  // Función para formatear la fecha al formato necesario para datetime-local
   const formatFechaCita = (fecha: string | null | undefined) => {
     if (!fecha) return '';
     const date = new Date(fecha);
-    const tzOffset = date.getTimezoneOffset() * 60000; // Convertir a milisegundos
+    const tzOffset = date.getTimezoneOffset() * 60000;
     const localISOTime = new Date(date.getTime() - tzOffset).toISOString().slice(0, 16);
     return localISOTime;
   };
@@ -37,13 +34,11 @@ function EditarCita({ cita, onActualizar, onCancelar }: EditarCitaProps) {
   const [loading, setLoading] = useState<boolean>(false);
 
   const handleActualizar = async () => {
-    // Validaciones básicas
     if (!fechaCita || !motivo || !veterinario || !estado) {
       setError('Por favor, completa todos los campos.');
       return;
     }
 
-    // Validación de fecha (ejemplo: la fecha no puede ser en el pasado)
     const selectedDate = new Date(fechaCita);
     const now = new Date();
     if (selectedDate < now) {
@@ -62,18 +57,12 @@ function EditarCita({ cita, onActualizar, onCancelar }: EditarCitaProps) {
         estado,
       };
 
-      // Enviar la petición PUT al backend para actualizar la cita
       const res = await api.put<Cita>(`/citas/${cita.id}`, updatedCita);
-
-      // Actualizar el estado en el componente padre
       onActualizar(res.data);
-
-      // Notificar al usuario de manera elegante
       toast.success('Cita actualizada exitosamente.');
     } catch (err: any) {
       console.error('Error al actualizar la cita:', err);
-      // Verificar si el error tiene una respuesta del servidor
-      if (err.response && err.response.data && err.response.data.message) {
+      if (err.response?.data?.message) {
         setError(err.response.data.message);
         toast.error(err.response.data.message);
       } else {
@@ -86,17 +75,25 @@ function EditarCita({ cita, onActualizar, onCancelar }: EditarCitaProps) {
   };
 
   return (
-    <div className="mt-6 p-4 border rounded bg-gray-100">
-      <h3 className="text-xl mb-4">Editar Cita</h3>
-      {error && <p className="text-red-500 mb-2">{error}</p>}
+    <div
+      className="mt-6 p-6 max-w-lg mx-auto bg-white shadow-lg rounded-lg"
+      style={{
+        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+        borderRadius: '8px',
+      }}
+    >
+      <h3 className="text-2xl font-bold mb-6 text-gray-600 text-center">Editar Cita</h3>
+      {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+
       <form
         onSubmit={(e) => {
           e.preventDefault();
           handleActualizar();
         }}
       >
+        {/* Fecha y hora */}
         <div className="mb-4">
-          <label htmlFor="fechaCita" className="block mb-1">
+          <label htmlFor="fechaCita" className="block text-gray-600 font-medium mb-1">
             Fecha y Hora:
           </label>
           <input
@@ -104,12 +101,14 @@ function EditarCita({ cita, onActualizar, onCancelar }: EditarCitaProps) {
             type="datetime-local"
             value={fechaCita || ''}
             onChange={(e) => setFechaCita(e.target.value)}
-            className="w-full p-2 border rounded"
+            className="w-full p-3 border rounded focus:outline-none focus:ring focus:ring-blue-300"
             required
           />
         </div>
+
+        {/* Motivo */}
         <div className="mb-4">
-          <label htmlFor="motivo" className="block mb-1">
+          <label htmlFor="motivo" className="block text-gray-600 font-medium mb-1">
             Motivo:
           </label>
           <input
@@ -117,12 +116,14 @@ function EditarCita({ cita, onActualizar, onCancelar }: EditarCitaProps) {
             type="text"
             value={motivo || ''}
             onChange={(e) => setMotivo(e.target.value)}
-            className="w-full p-2 border rounded"
+            className="w-full p-3 border rounded focus:outline-none focus:ring focus:ring-blue-300"
             required
           />
         </div>
+
+        {/* Veterinario */}
         <div className="mb-4">
-          <label htmlFor="veterinario" className="block mb-1">
+          <label htmlFor="veterinario" className="block text-gray-600 font-medium mb-1">
             Veterinario:
           </label>
           <input
@@ -130,19 +131,21 @@ function EditarCita({ cita, onActualizar, onCancelar }: EditarCitaProps) {
             type="text"
             value={veterinario || ''}
             onChange={(e) => setVeterinario(e.target.value)}
-            className="w-full p-2 border rounded"
+            className="w-full p-3 border rounded focus:outline-none focus:ring focus:ring-blue-300"
             required
           />
         </div>
+
+        {/* Estado */}
         <div className="mb-4">
-          <label htmlFor="estado" className="block mb-1">
+          <label htmlFor="estado" className="block text-gray-600 font-medium mb-1">
             Estado:
           </label>
           <select
             id="estado"
             value={estado || ''}
             onChange={(e) => setEstado(e.target.value)}
-            className="w-full p-2 border rounded"
+            className="w-full p-3 border rounded focus:outline-none focus:ring focus:ring-blue-300"
             required
           >
             <option value="">-- Selecciona un estado --</option>
@@ -151,10 +154,14 @@ function EditarCita({ cita, onActualizar, onCancelar }: EditarCitaProps) {
             <option value="CANCELADA">CANCELADA</option>
           </select>
         </div>
-        <div className="flex space-x-4">
+
+        {/* Botones */}
+        <div className="flex space-x-4 justify-between">
           <button
             type="submit"
-            className={`bg-blue-500 text-white py-2 px-4 rounded ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`bg-[#0288D1] hover:bg-[#0277BD] text-white py-2 px-4 rounded ${
+              loading ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
             disabled={loading}
           >
             {loading ? 'Actualizando...' : 'Actualizar'}
@@ -162,7 +169,7 @@ function EditarCita({ cita, onActualizar, onCancelar }: EditarCitaProps) {
           <button
             type="button"
             onClick={onCancelar}
-            className="bg-gray-500 text-white py-2 px-4 rounded"
+            className="bg-[#D32F2F] hover:bg-[#B71C1C] text-white py-2 px-4 rounded"
           >
             Cancelar
           </button>

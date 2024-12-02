@@ -1,7 +1,14 @@
-// src/components/AgregarAdoptante.tsx
 import { useState } from 'react';
 import api from '../api/axios';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import {
+  Box,
+  Button,
+  TextField,
+  Typography,
+} from '@mui/material';
+import AddIcon from '@mui/icons-material/Add'; // Ícono de agregar
 
 function AgregarAdoptante() {
   const [nombre, setNombre] = useState('');
@@ -11,6 +18,13 @@ function AgregarAdoptante() {
   const navigate = useNavigate();
 
   const handleAgregar = async () => {
+    // Validar formato del email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error('Por favor, ingresa un correo electrónico válido.');
+      return;
+    }
+
     try {
       await api.post('/adoptantes', {
         nombre,
@@ -18,78 +32,94 @@ function AgregarAdoptante() {
         direccion,
         telefono,
       });
-      console.log('Cliente agregado exitosamente');
+      toast.success('Cliente agregado exitosamente.');
       navigate('/adoptantes');
     } catch (error) {
       console.error('Error al agregar Cliente', error);
+      toast.error('Error al agregar cliente. Por favor, intenta nuevamente.');
     }
   };
 
   return (
-    <div className="flex flex-col space-y-6 max-w-md mx-auto mt-8 bg-white p-8 shadow-md rounded-lg">
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 3,
+        maxWidth: '600px',
+        margin: 'auto',
+        padding: 4,
+        backgroundColor: 'rgba(255, 255, 255, 0.8)', // Fondo blanco translúcido
+        boxShadow: 3,
+        borderRadius: 2,
+      }}
+    >
       {/* Título del formulario */}
-      <h1 className="text-3xl font-bold text-gray-800 flex items-center space-x-2">
-        <span>Agregar Adoptante</span>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth="2"
-          stroke="currentColor"
-          className="w-8 h-8 text-gray-800"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M12 4v16m8-8H4"
-          />
-        </svg>
-      </h1>
+      <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
+        <Typography variant="h5" fontWeight="bold" sx={{ color: '#6C757D' }}>
+          Agregar Cliente
+        </Typography>
+        <AddIcon sx={{ color: '#6C757D', fontSize: '32px' }} />
+      </Box>
 
       {/* Campo: Nombre */}
-      <input
-        type="text"
-        placeholder="Nombre"
-        className="outline-none rounded p-3 border border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 w-full"
+      <TextField
+        label="Nombre"
+        variant="outlined"
+        fullWidth
         value={nombre}
         onChange={(e) => setNombre(e.target.value)}
+        required
       />
 
       {/* Campo: Email */}
-      <input
+      <TextField
+        label="Email"
         type="email"
-        placeholder="Email"
-        className="outline-none rounded p-3 border border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 w-full"
+        variant="outlined"
+        fullWidth
         value={email}
         onChange={(e) => setEmail(e.target.value)}
+        required
       />
 
       {/* Campo: Dirección */}
-      <input
-        type="text"
-        placeholder="Dirección"
-        className="outline-none rounded p-3 border border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 w-full"
+      <TextField
+        label="Dirección"
+        variant="outlined"
+        fullWidth
         value={direccion}
         onChange={(e) => setDireccion(e.target.value)}
+        required
       />
 
       {/* Campo: Teléfono */}
-      <input
+      <TextField
+        label="Teléfono"
         type="text"
-        placeholder="Teléfono"
-        className="outline-none rounded p-3 border border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 w-full"
+        variant="outlined"
+        fullWidth
         value={telefono}
         onChange={(e) => setTelefono(e.target.value)}
+        required
       />
 
       {/* Botón para agregar */}
-      <button
-        className="bg-blue-500 text-white py-3 px-4 rounded shadow-lg hover:bg-blue-600 focus:outline-none focus:ring focus:ring-blue-300"
+      <Button
+        variant="contained"
+        fullWidth
+        sx={{
+          backgroundColor: '#0288D1', // Azul consistente con el diseño
+          color: '#fff',
+          '&:hover': {
+            backgroundColor: '#0277BD',
+          },
+        }}
         onClick={handleAgregar}
       >
-        Agregar Adoptante
-      </button>
-    </div>
+        Agregar Cliente
+      </Button>
+    </Box>
   );
 }
 

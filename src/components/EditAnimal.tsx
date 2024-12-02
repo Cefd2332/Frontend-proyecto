@@ -2,6 +2,18 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { FaEdit } from 'react-icons/fa';
+import {
+  Box,
+  Button,
+  Select,
+  MenuItem,
+  TextField,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  Typography,
+} from '@mui/material';
 
 function EditAnimal() {
   const { id } = useParams<{ id: string }>();
@@ -12,6 +24,7 @@ function EditAnimal() {
   const [edad, setEdad] = useState<number | ''>('');
   const [unidadEdad, setUnidadEdad] = useState<'meses' | 'años'>('años');
   const [estadoSalud, setEstadoSalud] = useState('');
+  const [genero, setGenero] = useState<'MACHO' | 'HEMBRA' | ''>(''); // Nuevo campo de género
   const [adoptanteId, setAdoptanteId] = useState('');
   const [adoptantes, setAdoptantes] = useState<{ id: string; nombre: string }[]>([]);
 
@@ -20,13 +33,14 @@ function EditAnimal() {
   useEffect(() => {
     const fetchAnimalData = async () => {
       try {
-        const res = await axios.get<{ 
-          nombre: string; 
-          especie: string; 
-          edad: number; 
-          unidadEdad: 'meses' | 'años'; 
-          estadoSalud: string; 
-          adoptanteId?: string; 
+        const res = await axios.get<{
+          nombre: string;
+          especie: string;
+          edad: number;
+          unidadEdad: 'meses' | 'años';
+          estadoSalud: string;
+          genero?: 'MACHO' | 'HEMBRA';
+          adoptanteId?: string;
         }>(`${API_BASE_URL}/animales/${id}`);
         const animal = res.data;
 
@@ -35,6 +49,7 @@ function EditAnimal() {
         setEdad(animal.edad);
         setUnidadEdad(animal.unidadEdad);
         setEstadoSalud(animal.estadoSalud);
+        setGenero(animal.genero || '');
         setAdoptanteId(animal.adoptanteId || '');
       } catch (error) {
         console.error('Error al cargar datos del animal:', error);
@@ -68,6 +83,7 @@ function EditAnimal() {
         edad,
         unidadEdad,
         estadoSalud,
+        genero,
         adoptanteId,
       };
 
@@ -81,113 +97,140 @@ function EditAnimal() {
   };
 
   return (
-    <form
+    <Box
+      component="form"
       onSubmit={handleUpdate}
-      className="flex flex-col space-y-4 max-w-md mx-auto bg-white p-6 shadow-md rounded"
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 3,
+        maxWidth: '600px',
+        margin: 'auto',
+        padding: 4,
+        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+        boxShadow: 3,
+        borderRadius: 2,
+      }}
     >
-      <h1 className="text-xl font-bold text-center mb-4">Editar Animal</h1>
+      <Box display="flex" alignItems="center" justifyContent="center" gap={1} mb={2}>
+        <FaEdit style={{ color: '#6c757d', fontSize: '24px' }} />
+        <Typography variant="h5" fontWeight="bold" color="#6c757d">
+          Editar Animal
+        </Typography>
+      </Box>
 
       {/* Nombre del animal */}
-      <input
-        type="text"
-        placeholder="Nombre del Animal"
-        className="outline rounded p-2 border border-gray-300"
+      <TextField
+        label="Nombre del Animal"
+        variant="outlined"
+        fullWidth
         value={nombre}
         onChange={(e) => setNombre(e.target.value)}
         required
       />
 
       {/* Especie del animal */}
-      <input
-        type="text"
-        placeholder="Especie"
-        className="outline rounded p-2 border border-gray-300"
+      <TextField
+        label="Especie"
+        variant="outlined"
+        fullWidth
         value={especie}
         onChange={(e) => setEspecie(e.target.value)}
         required
       />
 
       {/* Edad del animal */}
-      <div>
-        <input
-          type="number"
-          placeholder="Edad"
-          className="outline rounded p-2 w-full border border-gray-300"
-          value={edad}
-          onChange={(e) => setEdad(Number(e.target.value))}
-          required
-        />
-        <div className="flex items-center mt-2 space-x-4">
-          <label className="flex items-center">
-            <input
-              type="radio"
-              name="unidadEdad"
-              value="años"
-              checked={unidadEdad === 'años'}
-              onChange={() => setUnidadEdad('años')}
-              className="mr-2"
-            />
-            Años
-          </label>
-          <label className="flex items-center">
-            <input
-              type="radio"
-              name="unidadEdad"
-              value="meses"
-              checked={unidadEdad === 'meses'}
-              onChange={() => setUnidadEdad('meses')}
-              className="mr-2"
-            />
-            Meses
-          </label>
-        </div>
-      </div>
+      <Box>
+        <Typography variant="subtitle1" color="#6c757d">
+          Edad
+        </Typography>
+        <Box display="flex" gap={2} alignItems="center">
+          <TextField
+            type="number"
+            placeholder="Edad"
+            variant="outlined"
+            value={edad}
+            onChange={(e) => setEdad(Number(e.target.value))}
+            fullWidth
+            required
+          />
+          <RadioGroup
+            row
+            value={unidadEdad}
+            onChange={(e) => setUnidadEdad(e.target.value as 'meses' | 'años')}
+          >
+            <FormControlLabel value="años" control={<Radio />} label="Años" />
+            <FormControlLabel value="meses" control={<Radio />} label="Meses" />
+          </RadioGroup>
+        </Box>
+      </Box>
+
+      {/* Género del animal */}
+      <Box>
+        <Typography variant="subtitle1" color="#6c757d">
+          Género
+        </Typography>
+        <RadioGroup
+          row
+          value={genero}
+          onChange={(e) => setGenero(e.target.value as 'MACHO' | 'HEMBRA')}
+        >
+          <FormControlLabel value="MACHO" control={<Radio />} label="Macho" />
+          <FormControlLabel value="HEMBRA" control={<Radio />} label="Hembra" />
+        </RadioGroup>
+      </Box>
 
       {/* Estado de salud */}
-      <select
-        className="outline rounded p-2 border border-gray-300"
+      <Select
         value={estadoSalud}
         onChange={(e) => setEstadoSalud(e.target.value)}
+        fullWidth
         required
       >
-        <option value="">Seleccione un estado de salud</option>
-        <option value="SANO">Sano</option>
-        <option value="EN_TRATAMIENTO">En Tratamiento</option>
-        <option value="PERDIDO">Perdido</option>
-        <option value="RECUPERANDOSE">Recuperándose</option>
-      </select>
+        <MenuItem value="">Seleccione un estado de salud</MenuItem>
+        <MenuItem value="SANO">Sano</MenuItem>
+        <MenuItem value="EN_TRATAMIENTO">En Tratamiento</MenuItem>
+        <MenuItem value="PERDIDO">Perdido</MenuItem>
+        <MenuItem value="RECUPERANDOSE">Recuperándose</MenuItem>
+      </Select>
 
       {/* Adoptante */}
-      <select
-        className="outline rounded p-2 border border-gray-300"
+      <Select
         value={adoptanteId}
         onChange={(e) => setAdoptanteId(e.target.value)}
+        fullWidth
       >
-        <option value="">Seleccione un adoptante</option>
+        <MenuItem value="">Seleccione un adoptante</MenuItem>
         {adoptantes.map((adoptante) => (
-          <option key={adoptante.id} value={adoptante.id}>
+          <MenuItem key={adoptante.id} value={adoptante.id}>
             {adoptante.nombre} - {adoptante.id}
-          </option>
+          </MenuItem>
         ))}
-      </select>
+      </Select>
 
       {/* Botones */}
-      <div className="flex justify-between">
-        <button
+      <Box display="flex" justifyContent="space-between">
+        <Button
           type="submit"
-          className="bg-blue-500 text-white py-2 px-4 rounded shadow hover:bg-blue-600"
+          variant="contained"
+          sx={{
+            backgroundColor: '#0288D1',
+            color: '#fff',
+            '&:hover': { backgroundColor: '#0277BD' },
+          }}
         >
           Actualizar
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          className="bg-gray-500 text-white py-2 px-4 rounded shadow hover:bg-gray-600"
+          variant="outlined"
+          color="secondary"
           onClick={() => navigate('/dashboard')}
         >
           Cancelar
-        </button>
-      </div>
-    </form>
+        </Button>
+      </Box>
+    </Box>
   );
 }
 

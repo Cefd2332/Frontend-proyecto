@@ -5,7 +5,22 @@ import { toast } from 'react-toastify';
 import { saveAs } from 'file-saver';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Paper,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TablePagination,
+  TextField,
+} from '@mui/material';
+import { FaFilePdf, FaFileExcel } from 'react-icons/fa';
 
 interface Adoptante {
   id: number;
@@ -19,6 +34,9 @@ function AdoptantesList() {
   const [adoptantes, setAdoptantes] = useState<Adoptante[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [eliminandoId, setEliminandoId] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [page, setPage] = useState<number>(0);
+  const [rowsPerPage, setRowsPerPage] = useState<number>(5);
   const navigate = useNavigate();
 
   const API_BASE_URL = 'http://localhost:8080/api';
@@ -33,25 +51,23 @@ function AdoptantesList() {
       const res = await axios.get(`${API_BASE_URL}/adoptantes`);
       setAdoptantes(res.data as Adoptante[]);
     } catch (error) {
-      console.error('Error al obtener adoptantes', error);
-      toast.error('Error al obtener los adoptantes. Por favor, intenta nuevamente.');
+      toast.error('Error al obtener los Clientes. Por favor, intenta nuevamente.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleEliminar = async (id: number) => {
-    const confirmar = window.confirm('¿Estás seguro de eliminar este adoptante?');
+    const confirmar = window.confirm('¿Estás seguro de eliminar este Cliente?');
     if (!confirmar) return;
 
     setEliminandoId(id);
     try {
       await axios.delete(`${API_BASE_URL}/adoptantes/${id}`);
       setAdoptantes(adoptantes.filter((adoptante) => adoptante.id !== id));
-      toast.success('Adoptante eliminado exitosamente.');
-    } catch (error) {
-      console.error('Error al eliminar adoptante', error);
-      toast.error('Error al eliminar el adoptante. Por favor, intenta nuevamente.');
+      toast.success('Cliente eliminado exitosamente.');
+    } catch {
+      toast.error('Error al eliminar el Cliente. Por favor, intenta nuevamente.');
     } finally {
       setEliminandoId(null);
     }
@@ -59,7 +75,7 @@ function AdoptantesList() {
 
   const exportToPDF = () => {
     const doc = new jsPDF();
-    doc.text('Lista de Adoptantes', 10, 10);
+    doc.text('Lista de Clientes', 10, 10);
     autoTable(doc, {
       head: [['ID', 'Nombre', 'Email', 'Dirección', 'Teléfono']],
       body: adoptantes.map((adoptante) => [
@@ -71,7 +87,7 @@ function AdoptantesList() {
       ]),
       startY: 20,
     });
-    doc.save('Lista_Adoptantes.pdf');
+    doc.save('Lista_Clientes.pdf');
     toast.success('Archivo PDF exportado exitosamente.');
   };
 
@@ -82,109 +98,170 @@ function AdoptantesList() {
     });
 
     const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
-    saveAs(blob, 'Lista_Adoptantes.csv');
+    saveAs(blob, 'Lista_Clientes.csv');
     toast.success('Archivo Excel exportado exitosamente.');
   };
 
+  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(event.target.value.toLowerCase());
+  };
+
+  const handlePageChange = (event: unknown, newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const filteredAdoptantes = adoptantes.filter(
+    (adoptante) =>
+      adoptante.nombre.toLowerCase().includes(searchQuery) ||
+      adoptante.email.toLowerCase().includes(searchQuery) ||
+      adoptante.telefono.toLowerCase().includes(searchQuery) ||
+      adoptante.id.toString().includes(searchQuery)
+  );
+
+  const paginatedAdoptantes = filteredAdoptantes.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
+
   return (
-    <div className="p-8 max-w-7xl mx-auto bg-white rounded-lg shadow-lg">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-bold text-gray-800">Lista de Clientes</h1>
-        <div className="flex space-x-4">
-          <button
-            className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded shadow transition duration-300"
-            onClick={exportToPDF}
-          >
-            Exportar a PDF
-          </button>
-          <button
-            className="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-4 rounded shadow transition duration-300"
-            onClick={exportToExcel}
-          >
-            Exportar a Excel
-          </button>
-          <button
-            className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded shadow transition duration-300"
+    <Box
+      sx={{
+        padding: 3,
+        background: 'linear-gradient(to bottom, #B3E5FC, #FFFFFF)',
+        minHeight: '100vh',
+      }}
+    >
+      <Paper
+        sx={{
+          maxWidth: '1200px',
+          margin: 'auto',
+          padding: 4,
+          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+          boxShadow: 3,
+          borderRadius: 2,
+        }}
+      >
+        <Typography variant="h4" align="center" gutterBottom color="textSecondary">
+          Lista de Clientes
+        </Typography>
+        <Box sx={{ marginBottom: 2 }}>
+          <TextField
+            fullWidth
+            label="Buscar por ID, nombre, email o teléfono"
+            variant="outlined"
+            value={searchQuery}
+            onChange={handleSearch}
+          />
+        </Box>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+          <Box>
+            <Button
+              variant="contained"
+              startIcon={<FaFilePdf />}
+              onClick={exportToPDF}
+              sx={{
+                backgroundColor: '#D32F2F',
+                color: '#fff',
+                marginRight: 2,
+                '&:hover': { backgroundColor: '#B71C1C' },
+              }}
+            >
+              Exportar a PDF
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<FaFileExcel />}
+              onClick={exportToExcel}
+              sx={{
+                backgroundColor: '#4CAF50',
+                color: '#fff',
+                '&:hover': { backgroundColor: '#388E3C' },
+              }}
+            >
+              Exportar a Excel
+            </Button>
+          </Box>
+          <Button
+            variant="contained"
             onClick={() => navigate('/agregar-adoptante')}
+            sx={{
+              backgroundColor: '#0288D1',
+              color: '#fff',
+              '&:hover': { backgroundColor: '#0277BD' },
+            }}
           >
             Agregar Cliente
-          </button>
-        </div>
-      </div>
-
-      {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <svg
-            className="animate-spin h-10 w-10 text-green-500"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            ></circle>
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8v8H4z"
-            ></path>
-          </svg>
-        </div>
-      ) : adoptantes.length > 0 ? (
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-gray-100 rounded-lg shadow-lg">
-            <thead className="bg-gray-200 text-gray-700">
-              <tr>
-                <th className="py-4 px-6 text-left font-semibold">ID</th>
-                <th className="py-4 px-6 text-left font-semibold">Nombre</th>
-                <th className="py-4 px-6 text-left font-semibold">Email</th>
-                <th className="py-4 px-6 text-left font-semibold">Dirección</th>
-                <th className="py-4 px-6 text-left font-semibold">Teléfono</th>
-                <th className="py-4 px-6 text-center font-semibold">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {adoptantes.map((adoptante, index) => (
-                <tr
-                  key={adoptante.id}
-                  className={`border-b ${
-                    index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                  } hover:bg-gray-100`}
-                >
-                  <td className="py-4 px-6">{adoptante.id}</td>
-                  <td className="py-4 px-6">{adoptante.nombre}</td>
-                  <td className="py-4 px-6">{adoptante.email}</td>
-                  <td className="py-4 px-6">{adoptante.direccion}</td>
-                  <td className="py-4 px-6">{adoptante.telefono}</td>
-                  <td className="py-4 px-6 text-center">
-                    <button
-                      className={`${
-                        eliminandoId === adoptante.id
-                          ? 'bg-red-300 cursor-not-allowed'
-                          : 'bg-red-500 hover:bg-red-600'
-                      } text-white font-semibold py-2 px-4 rounded shadow transition duration-300`}
-                      onClick={() => handleEliminar(adoptante.id)}
-                      disabled={eliminandoId === adoptante.id}
+          </Button>
+        </Box>
+        {loading ? (
+          <Box display="flex" justifyContent="center" alignItems="center" sx={{ height: 300 }}>
+            <CircularProgress />
+          </Box>
+        ) : filteredAdoptantes.length > 0 ? (
+          <>
+            <TableContainer component={Paper} sx={{ backgroundColor: 'rgba(255, 255, 255, 0.9)' }}>
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ backgroundColor: '#0288D1' }}>
+                    <TableCell sx={{ color: '#ffffff', fontWeight: 'bold' }}>ID</TableCell>
+                    <TableCell sx={{ color: '#ffffff', fontWeight: 'bold' }}>Nombre</TableCell>
+                    <TableCell sx={{ color: '#ffffff', fontWeight: 'bold' }}>Email</TableCell>
+                    <TableCell sx={{ color: '#ffffff', fontWeight: 'bold' }}>Dirección</TableCell>
+                    <TableCell sx={{ color: '#ffffff', fontWeight: 'bold' }}>Teléfono</TableCell>
+                    <TableCell sx={{ color: '#ffffff', fontWeight: 'bold' }}>Acciones</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {paginatedAdoptantes.map((adoptante) => (
+                    <TableRow
+                      key={adoptante.id}
+                      sx={{
+                        '&:nth-of-type(odd)': { backgroundColor: 'rgba(0, 0, 0, 0.04)' },
+                        '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.08)' },
+                      }}
                     >
-                      {eliminandoId === adoptante.id ? 'Eliminando...' : 'Eliminar'}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <div className="flex justify-center items-center h-64">
-          <p className="text-gray-600 text-lg">No hay Clientes registrados.</p>
-        </div>
-      )}
-    </div>
+                      <TableCell>{adoptante.id}</TableCell>
+                      <TableCell>{adoptante.nombre}</TableCell>
+                      <TableCell>{adoptante.email}</TableCell>
+                      <TableCell>{adoptante.direccion}</TableCell>
+                      <TableCell>{adoptante.telefono}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="outlined"
+                          color="error"
+                          disabled={eliminandoId === adoptante.id}
+                          onClick={() => handleEliminar(adoptante.id)}
+                        >
+                          {eliminandoId === adoptante.id ? 'Eliminando...' : 'Eliminar'}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            <TablePagination
+              rowsPerPageOptions={[5, 10, 25]}
+              component="div"
+              count={filteredAdoptantes.length}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={handlePageChange}
+              onRowsPerPageChange={handleRowsPerPageChange}
+            />
+          </>
+        ) : (
+          <Typography variant="body1" align="center" color="textSecondary">
+            No hay Clientes registrados.
+          </Typography>
+        )}
+      </Paper>
+    </Box>
   );
 }
 
