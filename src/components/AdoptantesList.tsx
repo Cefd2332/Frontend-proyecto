@@ -106,7 +106,7 @@ function AdoptantesList() {
     setSearchQuery(event.target.value.toLowerCase());
   };
 
-  const handlePageChange = (event: unknown, newPage: number) => {
+  const handlePageChange = (newPage: number) => {
     setPage(newPage);
   };
 
@@ -251,7 +251,7 @@ function AdoptantesList() {
               count={filteredAdoptantes.length}
               rowsPerPage={rowsPerPage}
               page={page}
-              onPageChange={handlePageChange}
+              onPageChange={(_, newPage) => handlePageChange(newPage)}
               onRowsPerPageChange={handleRowsPerPageChange}
             />
           </>
