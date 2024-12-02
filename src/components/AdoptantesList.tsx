@@ -50,7 +50,17 @@ function AdoptantesList() {
     setLoading(true);
     try {
       const res = await axios.get(`${API_BASE_URL}/adoptantes`);
-      setAdoptantes(res.data as Adoptante[]);
+      const data = res.data as any;
+      console.log('Respuesta de la API:', data);
+      // Ajusta según la estructura real de data
+      if (Array.isArray(data)) {
+        setAdoptantes(data as Adoptante[]);
+      } else if (Array.isArray(data.data)) {
+        setAdoptantes(data.data as Adoptante[]);
+      } else {
+        // Manejo de error si data no es un arreglo
+        toast.error('La respuesta de la API no es válida.');
+      }
     } catch (error) {
       toast.error('Error al obtener los Clientes. Por favor, intenta nuevamente.');
     } finally {
@@ -116,13 +126,15 @@ function AdoptantesList() {
     setPage(0);
   };
 
-  const filteredAdoptantes = adoptantes.filter(
-    (adoptante) =>
-      adoptante.nombre.toLowerCase().includes(searchQuery) ||
-      adoptante.email.toLowerCase().includes(searchQuery) ||
-      adoptante.telefono.toLowerCase().includes(searchQuery) ||
-      adoptante.id.toString().includes(searchQuery)
-  );
+  const filteredAdoptantes = Array.isArray(adoptantes)
+    ? adoptantes.filter(
+        (adoptante) =>
+          adoptante.nombre.toLowerCase().includes(searchQuery) ||
+          adoptante.email.toLowerCase().includes(searchQuery) ||
+          adoptante.telefono.toLowerCase().includes(searchQuery) ||
+          adoptante.id.toString().includes(searchQuery)
+      )
+    : [];
 
   const paginatedAdoptantes = filteredAdoptantes.slice(
     page * rowsPerPage,
