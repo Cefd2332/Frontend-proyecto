@@ -36,9 +36,9 @@ function Register() {
         email,
         direccion,
         password,
+        confirmPassword,
       });
 
-      // Verifica si la respuesta es exitosa
       if (response.status === 200 || response.status === 201) {
         toast.success('Registro exitoso. Por favor inicia sesión.', {
           position: 'top-center',
@@ -55,20 +55,30 @@ function Register() {
     } catch (error: any) {
       console.error('Error al registrar:', error);
 
-      if (error.response && error.response.status === 500) {
-        // Asumimos que el usuario se creó correctamente
-        toast.success('Registro exitoso. Por favor inicia sesión.', {
-          position: 'top-center',
-          autoClose: 3000,
-        });
-        navigate('/'); // Redirige al inicio de sesión
-      } else if (error.response && error.response.status === 400) {
-        toast.error('El correo ya está registrado.', {
-          position: 'top-center',
-          autoClose: 4000,
-        });
+      if (error.response) {
+        console.log('Error response data:', error.response.data);
+
+        if (error.response.status === 500) {
+          // Asumimos que el usuario se creó correctamente
+          toast.success('Registro exitoso. Por favor inicia sesión.', {
+            position: 'top-center',
+            autoClose: 3000,
+          });
+          navigate('/'); // Redirige al inicio de sesión
+        } else if (error.response.status === 400) {
+          const errorMessage = error.response.data.message || 'Hubo un problema al registrar. Inténtalo nuevamente.';
+          toast.error(errorMessage, {
+            position: 'top-center',
+            autoClose: 4000,
+          });
+        } else {
+          toast.error('Hubo un problema al registrar. Inténtalo nuevamente.', {
+            position: 'top-center',
+            autoClose: 4000,
+          });
+        }
       } else {
-        toast.error('Hubo un problema al registrar. Inténtalo nuevamente.', {
+        toast.error('No se pudo conectar con el servidor. Inténtalo más tarde.', {
           position: 'top-center',
           autoClose: 4000,
         });
