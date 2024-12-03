@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { saveAs } from 'file-saver';
@@ -20,7 +19,7 @@ import {
   TextField,
 } from '@mui/material';
 import { FaFilePdf, FaFileExcel } from 'react-icons/fa';
-import api from '../api/axios';
+import api from '../api/axios'; // Asegúrate de que esta instancia tenga la URL base correcta
 
 interface Adoptante {
   id: number;
@@ -37,8 +36,6 @@ function AdoptantesList() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const navigate = useNavigate();
 
-  const API_BASE_URL = api;
-
   useEffect(() => {
     fetchAdoptantes();
   }, []);
@@ -46,7 +43,7 @@ function AdoptantesList() {
   const fetchAdoptantes = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}/adoptantes`);
+      const res = await api.get('/adoptantes');
       const data = res.data;
       console.log('Respuesta de la API:', data);
       // Verificamos que data es un arreglo
@@ -57,7 +54,8 @@ function AdoptantesList() {
         toast.error('La respuesta de la API no es válida.');
       }
     } catch (error) {
-      toast.error('Error al obtener los Clientes. Por favor, intenta nuevamente.');
+      console.error('Error al obtener los Clientes:', error);
+      toast.error('Error al obtener los Clientes. Por favor, verifica la conexión con la API.');
     } finally {
       setLoading(false);
     }
@@ -69,7 +67,7 @@ function AdoptantesList() {
 
     setEliminandoId(id);
     try {
-      await axios.delete(`${API_BASE_URL}/adoptantes/${id}`);
+      await api.delete(`/adoptantes/${id}`);
       setAdoptantes(adoptantes.filter((adoptante) => adoptante.id !== id));
       toast.success('Cliente eliminado exitosamente.');
     } catch {
