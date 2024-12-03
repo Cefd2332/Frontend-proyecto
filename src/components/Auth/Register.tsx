@@ -31,7 +31,7 @@ function Register() {
     }
 
     try {
-      await api.post('/auth/register', {
+      const response = await api.post('/auth/register', {
         nombre,
         email,
         direccion,
@@ -39,25 +39,44 @@ function Register() {
         confirmPassword,
       });
 
-      toast.success('Registro exitoso. Por favor inicia sesión.', {
-        position: 'top-center',
-        autoClose: 3000,
-      });
-
-      navigate('/');
-    } catch (error: any) {
-      if (error.response && error.response.status === 400) {
-        toast.error('El correo ya está registrado.', {
+      // Verifica el código de estado de la respuesta
+      if (response.status === 200 || response.status === 201) {
+        toast.success('Registro exitoso. Por favor inicia sesión.', {
           position: 'top-center',
-          autoClose: 4000,
+          autoClose: 3000,
         });
+        navigate('/'); // Redirige al inicio de sesión
       } else {
+        // Maneja otros códigos de estado como errores
         toast.error('Hubo un problema al registrar. Inténtalo nuevamente.', {
           position: 'top-center',
           autoClose: 4000,
         });
+        console.error('Error al registrar:', response);
       }
+    } catch (error: any) {
       console.error('Error al registrar:', error);
+
+      if (error.response) {
+        // Maneja los errores según el código de estado del servidor
+        if (error.response.status === 400) {
+          toast.error('El correo ya está registrado o los datos son inválidos.', {
+            position: 'top-center',
+            autoClose: 4000,
+          });
+        } else {
+          toast.error('Hubo un problema al registrar. Inténtalo nuevamente.', {
+            position: 'top-center',
+            autoClose: 4000,
+          });
+        }
+      } else {
+        // Maneja errores sin respuesta del servidor
+        toast.error('No se pudo conectar con el servidor. Inténtalo más tarde.', {
+          position: 'top-center',
+          autoClose: 4000,
+        });
+      }
     }
   };
 
