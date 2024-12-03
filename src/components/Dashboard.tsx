@@ -246,7 +246,7 @@ function Dashboard() {
   const handleEliminarAnimal = async (id: number) => {
     if (window.confirm('¿Estás seguro de que deseas eliminar este animal? Esta acción no se puede deshacer.')) {
       try {
-        await axios.delete(`http://localhost:8080/api/animales/${id}`);
+        await api.delete(`/animales/${id}`);
         setAnimales((prev) => prev.filter((animal) => animal.id !== id));
         // También eliminar de la selección si estaba seleccionado
         setSelectedAnimalIds((prev) => prev.filter(selectedId => selectedId !== id));
