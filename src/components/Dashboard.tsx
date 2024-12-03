@@ -111,6 +111,9 @@ function Dashboard() {
   const [orderBy, setOrderBy] = useState<string>('nombre');
   const navigate = useNavigate();
 
+  // Nuevo Estado para Selección de Animales
+  const [selectedAnimalIds, setSelectedAnimalIds] = useState<number[]>([]);
+
   // Tema fijo (modo claro) con gradiente celeste a blanco
   const theme = createTheme({
     palette: {
@@ -146,16 +149,23 @@ function Dashboard() {
   }, []);
 
   const exportToPDF = () => {
+    if (selectedAnimalIds.length === 0) {
+      toast.warn('No hay animales seleccionados para exportar.');
+      return;
+    }
+
     const doc = new jsPDF();
     doc.text('Lista de Animales en Atención', 10, 10);
     autoTable(doc, {
       head: [availableColumns.filter(col => selectedColumns.includes(col.id)).map(col => col.label)],
       body: stableSort(
-        animales.map(animal => ({
-          ...animal,
-          genero: animal.genero ? animal.genero.charAt(0).toUpperCase() + animal.genero.slice(1) : 'No especificado',
-          adoptanteId: animal.adoptanteId ?? undefined,
-        })).filter(animal => isAnimalVisible(animal)),
+        animales
+          .filter(animal => selectedAnimalIds.includes(animal.id))
+          .map(animal => ({
+            ...animal,
+            genero: animal.genero ? animal.genero.charAt(0).toUpperCase() + animal.genero.slice(1) : 'No especificado',
+            adoptanteId: animal.adoptanteId ?? undefined,
+          })),
         getComparator(order, orderBy as keyof Animal)
       ).map((animal) =>
         availableColumns
@@ -179,16 +189,23 @@ function Dashboard() {
   };
 
   const exportToExcel = () => {
+    if (selectedAnimalIds.length === 0) {
+      toast.warn('No hay animales seleccionados para exportar.');
+      return;
+    }
+
     let content = availableColumns
       .filter(col => selectedColumns.includes(col.id))
       .map(col => col.label)
       .join(',') + '\n';
     stableSort(
-      animales.map(animal => ({
-        ...animal,
-        genero: animal.genero ? animal.genero.charAt(0).toUpperCase() + animal.genero.slice(1) : 'No especificado',
-        adoptanteId: animal.adoptanteId ?? undefined,
-      })).filter(animal => isAnimalVisible(animal)),
+      animales
+        .filter(animal => selectedAnimalIds.includes(animal.id))
+        .map(animal => ({
+          ...animal,
+          genero: animal.genero ? animal.genero.charAt(0).toUpperCase() + animal.genero.slice(1) : 'No especificado',
+          adoptanteId: animal.adoptanteId ?? undefined,
+        })),
       getComparator(order, orderBy as keyof Animal)
     ).forEach((animal) => {
       content += availableColumns
@@ -231,6 +248,8 @@ function Dashboard() {
       try {
         await axios.delete(`http://localhost:8080/api/animales/${id}`);
         setAnimales((prev) => prev.filter((animal) => animal.id !== id));
+        // También eliminar de la selección si estaba seleccionado
+        setSelectedAnimalIds((prev) => prev.filter(selectedId => selectedId !== id));
         toast.success('Animal eliminado correctamente.');
       } catch (error) {
         console.error('Error al eliminar el animal', error);
@@ -278,6 +297,10 @@ function Dashboard() {
   const paginatedAnimals = sortedAnimals.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   const handleExportClick = () => {
+    if (selectedAnimalIds.length === 0) {
+      toast.warn('No hay animales seleccionados para exportar.');
+      return;
+    }
     setExportDialogOpen(true);
   };
 
@@ -305,6 +328,38 @@ function Dashboard() {
     setOrder(isAsc ? 'desc' : 'asc');
     setOrderBy(property);
   };
+
+  // Funciones para manejar la selección de animales
+  const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.checked) {
+      const newSelecteds = filteredAnimals.map((animal) => animal.id);
+      setSelectedAnimalIds(newSelecteds);
+      return;
+    }
+    setSelectedAnimalIds([]);
+  };
+
+  const handleSelectClick = (id: number) => {
+    const selectedIndex = selectedAnimalIds.indexOf(id);
+    let newSelected: number[] = [];
+
+    if (selectedIndex === -1) {
+      newSelected = newSelected.concat(selectedAnimalIds, id);
+    } else if (selectedIndex === 0) {
+      newSelected = newSelected.concat(selectedAnimalIds.slice(1));
+    } else if (selectedIndex === selectedAnimalIds.length - 1) {
+      newSelected = newSelected.concat(selectedAnimalIds.slice(0, -1));
+    } else if (selectedIndex > 0) {
+      newSelected = newSelected.concat(
+        selectedAnimalIds.slice(0, selectedIndex),
+        selectedAnimalIds.slice(selectedIndex + 1)
+      );
+    }
+
+    setSelectedAnimalIds(newSelected);
+  };
+
+  const isSelected = (id: number) => selectedAnimalIds.indexOf(id) !== -1;
 
   return (
     <ThemeProvider theme={theme}>
@@ -447,8 +502,9 @@ function Dashboard() {
                       marginRight: 2,
                       '&:hover': { backgroundColor: '#B71C1C' },
                     }}
+                    disabled={selectedAnimalIds.length === 0}
                   >
-                    Exportar a PDF
+                    Exportar Seleccionados a PDF
                   </Button>
                   <Button
                     variant="contained"
@@ -459,10 +515,14 @@ function Dashboard() {
                       color: '#fff',
                       '&:hover': { backgroundColor: '#388E3C' },
                     }}
+                    disabled={selectedAnimalIds.length === 0}
                   >
-                    Exportar a Excel
+                    Exportar Seleccionados a Excel
                   </Button>
                 </Box>
+                <Typography variant="subtitle1" color="textSecondary">
+                  {selectedAnimalIds.length} {selectedAnimalIds.length === 1 ? 'animal seleccionado' : 'animales seleccionados'}
+                </Typography>
                 <Button
                   variant="contained"
                   onClick={() => navigate('/registrar-animal')}
@@ -479,6 +539,18 @@ function Dashboard() {
                 <Table>
                   <TableHead>
                     <TableRow sx={{ backgroundColor: '#0288D1' }}>
+                      {/* Columna de Selección */}
+                      <TableCell padding="checkbox">
+                        <Checkbox
+                          color="primary"
+                          indeterminate={selectedAnimalIds.length > 0 && selectedAnimalIds.length < filteredAnimals.length}
+                          checked={filteredAnimals.length > 0 && selectedAnimalIds.length === filteredAnimals.length}
+                          onChange={handleSelectAllClick}
+                          inputProps={{
+                            'aria-label': 'seleccionar todos los animales',
+                          }}
+                        />
+                      </TableCell>
                       {availableColumns.map(col => (
                         <TableCell
                           key={col.id}
@@ -499,83 +571,101 @@ function Dashboard() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {paginatedAnimals.map((animal) => (
-                      <TableRow
-                        key={animal.id}
-                        sx={{
-                          '&:hover': { backgroundColor: '#e0e0e0' }, // Solo color al pasar el cursor
-                        }}
-                      >
-                        {availableColumns.map(col => (
-                          <TableCell key={col.id}>
-                            {(() => {
-                              switch (col.id) {
-                                case 'edad':
-                                  return `${animal.edad} ${animal.unidadEdad}`;
-                                case 'genero':
-                                  return animal.genero ? animal.genero.charAt(0).toUpperCase() + animal.genero.slice(1) : 'No especificado';
-                                case 'adoptanteId':
-                                  return animal.adoptanteId ? animal.adoptanteId.toString() : 'No asignado';
-                                default:
-                                  return (animal as any)[col.id];
-                              }
-                            })()}
+                    {paginatedAnimals.map((animal) => {
+                      const isItemSelected = isSelected(animal.id);
+                      return (
+                        <TableRow
+                          key={animal.id}
+                          hover
+                          role="checkbox"
+                          aria-checked={isItemSelected}
+                          selected={isItemSelected}
+                          sx={{
+                            '&:hover': { backgroundColor: '#e0e0e0' }, // Solo color al pasar el cursor
+                          }}
+                        >
+                          {/* Checkbox de Selección */}
+                          <TableCell padding="checkbox">
+                            <Checkbox
+                              color="primary"
+                              checked={isItemSelected}
+                              onChange={() => handleSelectClick(animal.id)}
+                              inputProps={{
+                                'aria-labelledby': `enhanced-table-checkbox-${animal.id}`,
+                              }}
+                            />
                           </TableCell>
-                        ))}
-                        <TableCell>
-                          <Box sx={{ display: 'flex', gap: 1 }}>
-                            <Tooltip title="Ver Vacunas">
-                              <Button
-                                variant="outlined"
-                                color="primary"
-                                size="small"
-                                onClick={() => navigate(`/animales/${animal.id}/vacunas`)}
-                              >
-                                Vacunas
-                              </Button>
-                            </Tooltip>
-                            <Tooltip title="Agendar Cita">
-                              <Button
-                                variant="outlined"
-                                color="success"
-                                size="small"
-                                onClick={() => navigate(`/agendar-cita/${animal.id}`)}
-                              >
-                                Cita
-                              </Button>
-                            </Tooltip>
-                            <Tooltip title="Editar Animal">
-                              <Button
-                                variant="outlined"
-                                color="warning"
-                                size="small"
-                                onClick={() => navigate(`/editar-animal/${animal.id}`)}
-                              >
-                                Editar
-                              </Button>
-                            </Tooltip>
-                            <Tooltip title="Eliminar Animal">
-                              <Button
-                                variant="outlined"
-                                color="error"
-                                size="small"
-                                onClick={() => handleEliminarAnimal(animal.id)}
-                                sx={{
-                                  color: '#D32F2F',
-                                  borderColor: '#D32F2F',
-                                  '&:hover': {
-                                    backgroundColor: 'rgba(211, 47, 47, 0.1)',
-                                    borderColor: '#B71C1C',
-                                  },
-                                }}
-                              >
-                                Eliminar
-                              </Button>
-                            </Tooltip>
-                          </Box>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                          {availableColumns.map(col => (
+                            <TableCell key={col.id}>
+                              {(() => {
+                                switch (col.id) {
+                                  case 'edad':
+                                    return `${animal.edad} ${animal.unidadEdad}`;
+                                  case 'genero':
+                                    return animal.genero ? animal.genero.charAt(0).toUpperCase() + animal.genero.slice(1) : 'No especificado';
+                                  case 'adoptanteId':
+                                    return animal.adoptanteId ? animal.adoptanteId.toString() : 'No asignado';
+                                  default:
+                                    return (animal as any)[col.id];
+                                }
+                              })()}
+                            </TableCell>
+                          ))}
+                          <TableCell>
+                            <Box sx={{ display: 'flex', gap: 1 }}>
+                              <Tooltip title="Ver Vacunas">
+                                <Button
+                                  variant="outlined"
+                                  color="primary"
+                                  size="small"
+                                  onClick={() => navigate(`/animales/${animal.id}/vacunas`)}
+                                >
+                                  Vacunas
+                                </Button>
+                              </Tooltip>
+                              <Tooltip title="Agendar Cita">
+                                <Button
+                                  variant="outlined"
+                                  color="success"
+                                  size="small"
+                                  onClick={() => navigate(`/agendar-cita/${animal.id}`)}
+                                >
+                                  Cita
+                                </Button>
+                              </Tooltip>
+                              <Tooltip title="Editar Animal">
+                                <Button
+                                  variant="outlined"
+                                  color="warning"
+                                  size="small"
+                                  onClick={() => navigate(`/editar-animal/${animal.id}`)}
+                                >
+                                  Editar
+                                </Button>
+                              </Tooltip>
+                              <Tooltip title="Eliminar Animal">
+                                <Button
+                                  variant="outlined"
+                                  color="error"
+                                  size="small"
+                                  onClick={() => handleEliminarAnimal(animal.id)}
+                                  sx={{
+                                    color: '#D32F2F',
+                                    borderColor: '#D32F2F',
+                                    '&:hover': {
+                                      backgroundColor: 'rgba(211, 47, 47, 0.1)',
+                                      borderColor: '#B71C1C',
+                                    },
+                                  }}
+                                >
+                                  Eliminar
+                                </Button>
+                              </Tooltip>
+                            </Box>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </TableContainer>

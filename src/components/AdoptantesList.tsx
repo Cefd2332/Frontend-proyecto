@@ -18,6 +18,7 @@ import {
   TableRow,
   TextField,
   TableSortLabel,
+  Checkbox,
   createTheme,
   ThemeProvider,
 } from '@mui/material';
@@ -75,6 +76,9 @@ function AdoptantesList() {
   const [order, setOrder] = useState<Order>('asc');
   const [orderBy, setOrderBy] = useState<keyof Adoptante>('nombre');
 
+  // Estados para selección
+  const [selectedAdoptantes, setSelectedAdoptantes] = useState<number[]>([]);
+
   // Tema fijo (modo claro) con gradiente celeste a blanco
   const theme = createTheme({
     palette: {
@@ -95,7 +99,7 @@ function AdoptantesList() {
   const fetchAdoptantes = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/adoptantes');
+      const res = await api.get<Adoptante[]>('/adoptantes');
       const data = res.data;
       console.log('Respuesta de la API:', data);
       // Verificamos que data es un arreglo
@@ -114,12 +118,21 @@ function AdoptantesList() {
   };
 
   const exportToPDF = () => {
+    if (selectedAdoptantes.length === 0) {
+      toast.warn('No hay Clientes seleccionados para exportar.');
+      return;
+    }
+
     const doc = new jsPDF();
     doc.text('Lista de Clientes', 10, 10);
     autoTable(doc, {
       head: [['ID', 'Nombre', 'Email', 'Dirección', 'Teléfono']],
       body: stableSort(
-        adoptantes.filter((adoptante) => isAdoptanteVisible(adoptante)),
+        adoptantes
+          .filter((adoptante) => selectedAdoptantes.includes(adoptante.id))
+          .map(adoptante => ({
+            ...adoptante,
+          })),
         getComparator(order, orderBy)
       ).map((adoptante) => [
         adoptante.id,
@@ -135,9 +148,18 @@ function AdoptantesList() {
   };
 
   const exportToExcel = () => {
+    if (selectedAdoptantes.length === 0) {
+      toast.warn('No hay Clientes seleccionados para exportar.');
+      return;
+    }
+
     let content = 'ID,Nombre,Email,Dirección,Teléfono\n';
     stableSort(
-      adoptantes.filter((adoptante) => isAdoptanteVisible(adoptante)),
+      adoptantes
+        .filter((adoptante) => selectedAdoptantes.includes(adoptante.id))
+        .map(adoptante => ({
+          ...adoptante,
+        })),
       getComparator(order, orderBy)
     ).forEach((adoptante) => {
       content += `${adoptante.id},${adoptante.nombre},${adoptante.email},${adoptante.direccion},${adoptante.telefono}\n`;
@@ -175,6 +197,8 @@ function AdoptantesList() {
     try {
       await api.delete(`/adoptantes/${id}`);
       setAdoptantes(adoptantes.filter((adoptante) => adoptante.id !== id));
+      // También eliminar de la selección si estaba seleccionado
+      setSelectedAdoptantes((prev) => prev.filter(selectedId => selectedId !== id));
       toast.success('Cliente eliminado exitosamente.');
     } catch {
       toast.error('Error al eliminar el Cliente. Por favor, intenta nuevamente.');
@@ -183,10 +207,6 @@ function AdoptantesList() {
     }
   };
 
-  const isAdoptanteVisible = (_adoptante: Adoptante) => {
-    // Puedes añadir más lógica de filtrado si es necesario
-    return true;
-  };
 
   // Función para manejar el ordenamiento al hacer clic en el encabezado
   const handleRequestSort = (property: keyof Adoptante) => {
@@ -194,6 +214,38 @@ function AdoptantesList() {
     setOrder(isAsc ? 'desc' : 'asc');
     setOrderBy(property);
   };
+
+  // Funciones para manejar la selección de adoptantes
+  const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.checked) {
+      const newSelecteds = filteredAdoptantes.map((adoptante) => adoptante.id);
+      setSelectedAdoptantes(newSelecteds);
+      return;
+    }
+    setSelectedAdoptantes([]);
+  };
+
+  const handleSelectClick = (id: number) => {
+    const selectedIndex = selectedAdoptantes.indexOf(id);
+    let newSelected: number[] = [];
+
+    if (selectedIndex === -1) {
+      newSelected = newSelected.concat(selectedAdoptantes, id);
+    } else if (selectedIndex === 0) {
+      newSelected = newSelected.concat(selectedAdoptantes.slice(1));
+    } else if (selectedIndex === selectedAdoptantes.length - 1) {
+      newSelected = newSelected.concat(selectedAdoptantes.slice(0, -1));
+    } else if (selectedIndex > 0) {
+      newSelected = newSelected.concat(
+        selectedAdoptantes.slice(0, selectedIndex),
+        selectedAdoptantes.slice(selectedIndex + 1)
+      );
+    }
+
+    setSelectedAdoptantes(newSelected);
+  };
+
+  const isSelected = (id: number) => selectedAdoptantes.indexOf(id) !== -1;
 
   return (
     <ThemeProvider theme={theme}>
@@ -226,7 +278,7 @@ function AdoptantesList() {
               onChange={handleSearch}
             />
           </Box>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3, alignItems: 'center' }}>
             <Box>
               <Button
                 variant="contained"
@@ -238,8 +290,9 @@ function AdoptantesList() {
                   marginRight: 2,
                   '&:hover': { backgroundColor: '#B71C1C' },
                 }}
+                disabled={selectedAdoptantes.length === 0}
               >
-                Exportar a PDF
+                Exportar Seleccionados a PDF
               </Button>
               <Button
                 variant="contained"
@@ -250,10 +303,14 @@ function AdoptantesList() {
                   color: '#fff',
                   '&:hover': { backgroundColor: '#388E3C' },
                 }}
+                disabled={selectedAdoptantes.length === 0}
               >
-                Exportar a Excel
+                Exportar Seleccionados a Excel
               </Button>
             </Box>
+            <Typography variant="subtitle1" color="textSecondary">
+              {selectedAdoptantes.length} {selectedAdoptantes.length === 1 ? 'cliente seleccionado' : 'clientes seleccionados'}
+            </Typography>
             <Button
               variant="contained"
               onClick={() => navigate('/agregar-adoptante')}
@@ -276,6 +333,18 @@ function AdoptantesList() {
                 <Table>
                   <TableHead>
                     <TableRow sx={{ backgroundColor: '#0288D1' }}>
+                      {/* Columna de Selección */}
+                      <TableCell padding="checkbox">
+                        <Checkbox
+                          color="primary"
+                          indeterminate={selectedAdoptantes.length > 0 && selectedAdoptantes.length < filteredAdoptantes.length}
+                          checked={filteredAdoptantes.length > 0 && selectedAdoptantes.length === filteredAdoptantes.length}
+                          onChange={handleSelectAllClick}
+                          inputProps={{
+                            'aria-label': 'seleccionar todos los clientes',
+                          }}
+                        />
+                      </TableCell>
                       {/* Encabezados con funcionalidad de ordenamiento */}
                       <TableCell sx={{ color: '#ffffff', fontWeight: 'bold' }}>
                         <TableSortLabel
@@ -331,30 +400,50 @@ function AdoptantesList() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {displayedAdoptantes.map((adoptante) => (
-                      <TableRow
-                        key={adoptante.id}
-                        sx={{
-                          '&:hover': { backgroundColor: '#e0f7fa' }, // Color de hover celeste suave
-                        }}
-                      >
-                        <TableCell>{adoptante.id}</TableCell>
-                        <TableCell>{adoptante.nombre}</TableCell>
-                        <TableCell>{adoptante.email}</TableCell>
-                        <TableCell>{adoptante.direccion}</TableCell>
-                        <TableCell>{adoptante.telefono}</TableCell>
-                        <TableCell>
-                          <Button
-                            variant="outlined"
-                            color="error"
-                            disabled={eliminandoId === adoptante.id}
-                            onClick={() => handleEliminar(adoptante.id)}
-                          >
-                            {eliminandoId === adoptante.id ? 'Eliminando...' : 'Eliminar'}
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {displayedAdoptantes.map((adoptante) => {
+                      const isItemSelected = isSelected(adoptante.id);
+                      return (
+                        <TableRow
+                          key={adoptante.id}
+                          hover
+                          role="checkbox"
+                          aria-checked={isItemSelected}
+                          selected={isItemSelected}
+                          sx={{
+                            '&:hover': { backgroundColor: '#e0f7fa' }, // Color de hover celeste suave
+                          }}
+                        >
+                          {/* Checkbox de Selección */}
+                          <TableCell padding="checkbox">
+                            <Checkbox
+                              color="primary"
+                              checked={isItemSelected}
+                              onChange={() => handleSelectClick(adoptante.id)}
+                              inputProps={{
+                                'aria-labelledby': `enhanced-table-checkbox-${adoptante.id}`,
+                              }}
+                            />
+                          </TableCell>
+                          {/* Celdas de Datos */}
+                          <TableCell>{adoptante.id}</TableCell>
+                          <TableCell>{adoptante.nombre}</TableCell>
+                          <TableCell>{adoptante.email}</TableCell>
+                          <TableCell>{adoptante.direccion}</TableCell>
+                          <TableCell>{adoptante.telefono}</TableCell>
+                          {/* Acciones */}
+                          <TableCell>
+                            <Button
+                              variant="outlined"
+                              color="error"
+                              disabled={eliminandoId === adoptante.id}
+                              onClick={() => handleEliminar(adoptante.id)}
+                            >
+                              {eliminandoId === adoptante.id ? 'Eliminando...' : 'Eliminar'}
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </TableContainer>
