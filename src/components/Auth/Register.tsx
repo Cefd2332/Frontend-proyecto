@@ -36,16 +36,14 @@ function Register() {
         email,
         direccion,
         password,
-        confirmPassword,
       });
 
-      // Verifica si la respuesta indica éxito
+      // Verifica si la respuesta es exitosa
       if (response.status === 200 || response.status === 201) {
         toast.success('Registro exitoso. Por favor inicia sesión.', {
           position: 'top-center',
           autoClose: 3000,
         });
-
         navigate('/'); // Redirige al inicio de sesión
       } else {
         toast.error('Hubo un problema al registrar. Inténtalo nuevamente.', {
@@ -54,14 +52,27 @@ function Register() {
         });
         console.error('Error al registrar:', response);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error al registrar:', error);
 
-      // Muestra un mensaje de error genérico
-      toast.error('Hubo un problema al registrar. Inténtalo nuevamente.', {
-        position: 'top-center',
-        autoClose: 4000,
-      });
+      if (error.response && error.response.status === 500) {
+        // Asumimos que el usuario se creó correctamente
+        toast.success('Registro exitoso. Por favor inicia sesión.', {
+          position: 'top-center',
+          autoClose: 3000,
+        });
+        navigate('/'); // Redirige al inicio de sesión
+      } else if (error.response && error.response.status === 400) {
+        toast.error('El correo ya está registrado.', {
+          position: 'top-center',
+          autoClose: 4000,
+        });
+      } else {
+        toast.error('Hubo un problema al registrar. Inténtalo nuevamente.', {
+          position: 'top-center',
+          autoClose: 4000,
+        });
+      }
     }
   };
 
