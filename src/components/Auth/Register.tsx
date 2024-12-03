@@ -31,32 +31,37 @@ function Register() {
     }
 
     try {
-      await api.post('/auth/register', {
+      const response = await api.post('/auth/register', {
         nombre,
         email,
         direccion,
         password,
+        confirmPassword,
       });
 
-      // Mostrar mensaje de éxito y redirigir al inicio de sesión
-      toast.success('Registro exitoso. Por favor inicia sesión.', {
-        position: 'top-center',
-        autoClose: 3000,
-      });
+      // Verifica si la respuesta indica éxito
+      if (response.status === 200 || response.status === 201) {
+        toast.success('Registro exitoso. Por favor inicia sesión.', {
+          position: 'top-center',
+          autoClose: 3000,
+        });
 
-      navigate('/'); // Redirige al inicio de sesión
+        navigate('/'); // Redirige al inicio de sesión
+      } else {
+        toast.error('Hubo un problema al registrar. Inténtalo nuevamente.', {
+          position: 'top-center',
+          autoClose: 4000,
+        });
+        console.error('Error al registrar:', response);
+      }
     } catch (error) {
       console.error('Error al registrar:', error);
 
-      // Aún si ocurre un error, asumimos que el registro fue exitoso y redirigimos al inicio de sesión
-      toast.success('Registro exitoso. Por favor inicia sesión.', {
+      // Muestra un mensaje de error genérico
+      toast.error('Hubo un problema al registrar. Inténtalo nuevamente.', {
         position: 'top-center',
-        autoClose: 3000,
+        autoClose: 4000,
       });
-
-      navigate('/'); // Redirige al inicio de sesión
-
-      // No utilizamos AxiosError ni manejamos el error detalladamente
     }
   };
 
