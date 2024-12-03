@@ -129,7 +129,12 @@ function Dashboard() {
       setLoading(true);
       try {
         const res = await api.get<Animal[]>('/animales');
-        setAnimales(res.data);
+        // Opcional: Normalizar el género a mayúsculas para consistencia
+        const normalizedData = res.data.map(animal => ({
+          ...animal,
+          genero: animal.genero ? animal.genero.toLowerCase() : undefined,
+        }));
+        setAnimales(normalizedData);
       } catch (error) {
         console.error('Error al obtener animales', error);
         toast.error('Error al obtener animales.');
@@ -146,7 +151,11 @@ function Dashboard() {
     autoTable(doc, {
       head: [availableColumns.filter(col => selectedColumns.includes(col.id)).map(col => col.label)],
       body: stableSort(
-        animales.map(animal => ({ ...animal, genero: animal.genero || 'No especificado', adoptanteId: animal.adoptanteId ?? undefined })).filter(animal => isAnimalVisible(animal)),
+        animales.map(animal => ({
+          ...animal,
+          genero: animal.genero ? animal.genero.charAt(0).toUpperCase() + animal.genero.slice(1) : 'No especificado',
+          adoptanteId: animal.adoptanteId ?? undefined,
+        })).filter(animal => isAnimalVisible(animal)),
         getComparator(order, orderBy as keyof Animal)
       ).map((animal) =>
         availableColumns
@@ -175,7 +184,11 @@ function Dashboard() {
       .map(col => col.label)
       .join(',') + '\n';
     stableSort(
-      animales.map(animal => ({ ...animal, genero: animal.genero || 'No especificado', adoptanteId: animal.adoptanteId ?? undefined })).filter(animal => isAnimalVisible(animal)),
+      animales.map(animal => ({
+        ...animal,
+        genero: animal.genero ? animal.genero.charAt(0).toUpperCase() + animal.genero.slice(1) : 'No especificado',
+        adoptanteId: animal.adoptanteId ?? undefined,
+      })).filter(animal => isAnimalVisible(animal)),
       getComparator(order, orderBy as keyof Animal)
     ).forEach((animal) => {
       content += availableColumns
@@ -228,9 +241,10 @@ function Dashboard() {
 
   const handleFilterChange = (event: SelectChangeEvent<string> | React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
+    // Si el filtro es 'genero', normalizar a minúsculas para consistencia
     setFilters((prev) => ({
       ...prev,
-      [name as string]: value as string,
+      [name as string]: name === 'genero' ? value.toLowerCase() : value,
     }));
     setPage(0);
   };
@@ -239,7 +253,7 @@ function Dashboard() {
     const { especie, estadoSalud, genero, edadMin, edadMax } = filters;
     const matchesEspecie = especie ? animal.especie === especie : true;
     const matchesEstadoSalud = estadoSalud ? animal.estadoSalud === estadoSalud : true;
-    const matchesGenero = genero ? animal.genero === genero : true;
+    const matchesGenero = genero ? (animal.genero ? animal.genero.toLowerCase() === genero : false) : true;
     const matchesEdadMin = edadMin ? animal.edad >= parseInt(edadMin, 10) : true;
     const matchesEdadMax = edadMax ? animal.edad <= parseInt(edadMax, 10) : true;
     const matchesSearch =
@@ -253,7 +267,11 @@ function Dashboard() {
 
   // Ordenamiento de los animales filtrados
   const sortedAnimals = stableSort(
-    filteredAnimals.map(animal => ({ ...animal, genero: animal.genero || 'No especificado', adoptanteId: animal.adoptanteId ?? undefined })),
+    filteredAnimals.map(animal => ({
+      ...animal,
+      genero: animal.genero ? animal.genero.charAt(0).toUpperCase() + animal.genero.slice(1) : 'No especificado',
+      adoptanteId: animal.adoptanteId ?? undefined,
+    })),
     getComparator(order, orderBy as keyof Animal)
   );
 
@@ -360,8 +378,8 @@ function Dashboard() {
                 <MenuItem value="">
                   <em>Todos</em>
                 </MenuItem>
-                <MenuItem value="Macho">Macho</MenuItem>
-                <MenuItem value="Hembra">Hembra</MenuItem>
+                <MenuItem value="macho">Macho</MenuItem>
+                <MenuItem value="hembra">Hembra</MenuItem>
                 {/* Otros géneros si es aplicable */}
               </Select>
             </FormControl>
@@ -465,7 +483,7 @@ function Dashboard() {
                         <TableCell
                           key={col.id}
                           sx={{ color: '#ffffff', fontWeight: 'bold' }}
-                          sortDirection={orderBy === col.id ? order : false} // Eliminado el sortDirection de TableCell
+                          sortDirection={orderBy === col.id ? order : false}
                         >
                           <TableSortLabel
                             active={orderBy === col.id}
@@ -495,7 +513,7 @@ function Dashboard() {
                                 case 'edad':
                                   return `${animal.edad} ${animal.unidadEdad}`;
                                 case 'genero':
-                                  return animal.genero || 'No especificado';
+                                  return animal.genero ? animal.genero.charAt(0).toUpperCase() + animal.genero.slice(1) : 'No especificado';
                                 case 'adoptanteId':
                                   return animal.adoptanteId ? animal.adoptanteId.toString() : 'No asignado';
                                 default:

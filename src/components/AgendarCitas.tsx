@@ -5,13 +5,18 @@ import { toast } from 'react-toastify';
 import {
   Box,
   Button,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
   TextField,
   Typography,
+  Autocomplete,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Grid,
+  Paper,
 } from '@mui/material';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
 import api from '../api/axios';
 
 interface Animal {
@@ -19,15 +24,21 @@ interface Animal {
   nombre: string;
 }
 
+interface Cita {
+  animalId: number;
+  fechaCita: string;
+  motivo: string;
+  veterinario: string;
+}
+
 function AgendarCita() {
   const { id } = useParams<{ id: string }>();
-  const [animalId, setAnimalId] = useState('');
-  const [fechaCita, setFechaCita] = useState('');
-  const [motivo, setMotivo] = useState('');
-  const [veterinario, setVeterinario] = useState('');
+  const navigate = useNavigate();
+
   const [animales, setAnimales] = useState<Animal[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
+  const [openSummary, setOpenSummary] = useState<boolean>(false);
+  const [citaData, setCitaData] = useState<Cita | null>(null);
 
   useEffect(() => {
     const fetchAnimales = async () => {
@@ -35,7 +46,7 @@ function AgendarCita() {
         const res = await api.get<Animal[]>('/animales');
         setAnimales(res.data);
         if (id) {
-          setAnimalId(id);
+          setFieldValue('animalId', parseInt(id));
         }
       } catch (error) {
         console.error('Error al obtener animales', error);
@@ -43,25 +54,64 @@ function AgendarCita() {
       }
     };
     fetchAnimales();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  const handleRegistrar = async () => {
-    try {
-      let fechaCitaISO = fechaCita;
-      if (fechaCita && fechaCita.length === 16) {
-        fechaCitaISO = `${fechaCita}:00`;
-      }
+  // Definición del esquema de validación con Yup
+  const validationSchema = Yup.object({
+    animalId: Yup.number()
+      .required('Seleccione un animal')
+      .oneOf(animales.map((animal) => animal.id), 'Seleccione un animal válido'),
+    fechaCita: Yup.string()
+      .required('Seleccione la fecha y hora de la cita')
+      .test('is-future', 'La fecha debe ser futura', (value) => {
+        return value ? new Date(value) > new Date() : false;
+      }),
+    motivo: Yup.string()
+      .required('Ingrese el motivo de la cita')
+      .min(5, 'El motivo debe tener al menos 5 caracteres'),
+    veterinario: Yup.string()
+      .required('Ingrese el nombre del veterinario')
+      .min(3, 'El nombre del veterinario debe tener al menos 3 caracteres'),
+  });
 
-      if (!animalId || !fechaCitaISO || !motivo || !veterinario) {
-        toast.error('Por favor, complete todos los campos.');
-        return;
+  // Uso de Formik para manejar el formulario
+  const formik = useFormik({
+    initialValues: {
+      animalId: '',
+      fechaCita: '',
+      motivo: '',
+      veterinario: '',
+    },
+    validationSchema: validationSchema,
+    onSubmit: (values) => {
+      // Guardar los datos para mostrar en el resumen
+      setCitaData({
+        ...values,
+        animalId: parseInt(values.animalId),
+      });
+      setOpenSummary(true);
+    },
+  });
+
+  const { values, errors, touched, handleChange, handleSubmit, setFieldValue } = formik;
+
+  // Función para confirmar y enviar la cita
+  const confirmarCita = async () => {
+    if (!citaData) return;
+
+    try {
+      // Formatear la fecha a ISO si es necesario
+      let fechaCitaISO = citaData.fechaCita;
+      if (citaData.fechaCita && citaData.fechaCita.length === 16) {
+        fechaCitaISO = `${citaData.fechaCita}:00`;
       }
 
       await api.post('/citas', {
-        animalId: parseInt(animalId),
+        animalId: citaData.animalId,
         fechaCita: fechaCitaISO,
-        motivo,
-        veterinario,
+        motivo: citaData.motivo,
+        veterinario: citaData.veterinario,
       });
 
       toast.success('Cita registrada exitosamente.');
@@ -72,93 +122,181 @@ function AgendarCita() {
     }
   };
 
+  // Filtrar los animales según la búsqueda en Autocomplete
+  const [animalInput, setAnimalInput] = useState('');
+
+  const filteredAnimales = animales.filter((animal) =>
+    animal.nombre.toLowerCase().includes(animalInput.toLowerCase())
+  );
+
   return (
     <Box
       sx={{
-        maxWidth: '600px',
-        margin: 'auto',
-        padding: 4,
-        backgroundColor: 'rgba(255, 255, 255, 0.8)', // Fondo translúcido
-        boxShadow: 3,
-        borderRadius: 2,
+        padding: 3,
+        background: 'linear-gradient(to bottom, #B3E5FC, #FFFFFF)', // Gradiente original
+        minHeight: '100vh',
       }}
     >
-      <Box display="flex" alignItems="center" justifyContent="center" gap={1} mb={3}>
-        <FaCalendarAlt style={{ color: '#6c757d', fontSize: '24px' }} />
-        <Typography variant="h5" fontWeight="bold" color="#6c757d">
-          Agendar Nueva Cita
-        </Typography>
-      </Box>
+      <Paper
+        sx={{
+          maxWidth: '600px',
+          margin: 'auto',
+          padding: 4,
+          backgroundColor: 'rgba(255, 255, 255, 0.95)', // Fondo ligeramente translúcido
+          boxShadow: 3,
+          borderRadius: 2,
+        }}
+      >
+        <Box display="flex" alignItems="center" justifyContent="center" gap={1} mb={3}>
+          <FaCalendarAlt style={{ color: '#0288D1', fontSize: '24px' }} />
+          <Typography variant="h5" fontWeight="bold" color="#0288D1">
+            Agendar Nueva Cita
+          </Typography>
+        </Box>
 
-      {error && <Typography color="error" textAlign="center" mb={2}>{error}</Typography>}
+        {error && (
+          <Typography color="error" textAlign="center" mb={2}>
+            {error}
+          </Typography>
+        )}
 
-      <Box display="flex" flexDirection="column" gap={3}>
-        {/* Selección del animal */}
-        <FormControl fullWidth>
-          <InputLabel>Seleccione un animal</InputLabel>
-          <Select
-            value={animalId}
-            onChange={(e) => setAnimalId(e.target.value)}
-            required
-          >
-            <MenuItem value="">Seleccione un animal</MenuItem>
-            {animales.map((animal) => (
-              <MenuItem key={animal.id} value={animal.id}>
-                {animal.nombre} - ID: {animal.id}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        <form onSubmit={handleSubmit}>
+          <Grid container spacing={3}>
+            {/* Selección del animal con Autocomplete */}
+            <Grid item xs={12}>
+              <Autocomplete
+                options={filteredAnimales}
+                getOptionLabel={(option) => `${option.nombre} - ID: ${option.id}`}
+                filterSelectedOptions
+                value={
+                  animales.find((animal) => animal.id === parseInt(values.animalId)) || null
+                }
+                onChange={(_event, newValue) => {
+                  setFieldValue('animalId', newValue ? newValue.id : '');
+                }}
+                onInputChange={(_event, newInputValue) => {
+                  setAnimalInput(newInputValue);
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Seleccione un animal"
+                    variant="outlined"
+                    required
+                    error={touched.animalId && Boolean(errors.animalId)}
+                    helperText={touched.animalId && errors.animalId}
+                  />
+                )}
+              />
+            </Grid>
 
-        {/* Fecha y hora de la cita */}
-        <TextField
-          type="datetime-local"
-          label="Fecha y hora de la cita"
-          InputLabelProps={{
-            shrink: true, // Evita que el texto se superponga
-          }}
-          value={fechaCita}
-          onChange={(e) => setFechaCita(e.target.value)}
-          fullWidth
-          required
-        />
+            {/* Fecha y hora de la cita */}
+            <Grid item xs={12}>
+              <TextField
+                type="datetime-local"
+                label="Fecha y hora de la cita"
+                InputLabelProps={{
+                  shrink: true, // Evita que el texto se superponga
+                }}
+                name="fechaCita"
+                value={values.fechaCita}
+                onChange={handleChange}
+                fullWidth
+                required
+                error={touched.fechaCita && Boolean(errors.fechaCita)}
+                helperText={touched.fechaCita && errors.fechaCita}
+              />
+            </Grid>
 
-        {/* Motivo de la cita */}
-        <TextField
-          type="text"
-          label="Motivo"
-          placeholder="Motivo de la cita"
-          value={motivo}
-          onChange={(e) => setMotivo(e.target.value)}
-          fullWidth
-          required
-        />
+            {/* Motivo de la cita */}
+            <Grid item xs={12}>
+              <TextField
+                type="text"
+                label="Motivo"
+                placeholder="Motivo de la cita"
+                name="motivo"
+                value={values.motivo}
+                onChange={handleChange}
+                fullWidth
+                required
+                error={touched.motivo && Boolean(errors.motivo)}
+                helperText={touched.motivo && errors.motivo}
+              />
+            </Grid>
 
-        {/* Veterinario */}
-        <TextField
-          type="text"
-          label="Veterinario"
-          placeholder="Nombre del veterinario"
-          value={veterinario}
-          onChange={(e) => setVeterinario(e.target.value)}
-          fullWidth
-          required
-        />
+            {/* Veterinario */}
+            <Grid item xs={12}>
+              <TextField
+                type="text"
+                label="Veterinario"
+                placeholder="Nombre del veterinario"
+                name="veterinario"
+                value={values.veterinario}
+                onChange={handleChange}
+                fullWidth
+                required
+                error={touched.veterinario && Boolean(errors.veterinario)}
+                helperText={touched.veterinario && errors.veterinario}
+              />
+            </Grid>
 
-        {/* Botón para agendar la cita */}
-        <Button
-          variant="contained"
-          onClick={handleRegistrar}
-          disabled={!animalId || !fechaCita || !motivo || !veterinario}
-          fullWidth
-          sx={{
-            backgroundColor: '#0288D1',
-            '&:hover': { backgroundColor: '#0277BD' },
-          }}
-        >
-          Agendar Cita
-        </Button>
-      </Box>
+            {/* Botones */}
+            <Grid item xs={12}>
+              <Button
+                variant="contained"
+                type="submit"
+                fullWidth
+                sx={{
+                  backgroundColor: '#0288D1',
+                  '&:hover': { backgroundColor: '#0277BD' },
+                }}
+                startIcon={<FaCalendarAlt />}
+                disabled={
+                  !values.animalId ||
+                  !values.fechaCita ||
+                  !values.motivo ||
+                  !values.veterinario ||
+                  Object.keys(errors).length > 0
+                }
+              >
+                Agendar Cita
+              </Button>
+            </Grid>
+          </Grid>
+        </form>
+
+        {/* Diálogo de Resumen de la Cita */}
+        <Dialog open={openSummary} onClose={() => setOpenSummary(false)}>
+          <DialogTitle>Confirmar Cita</DialogTitle>
+          <DialogContent dividers>
+            {citaData && (
+              <Box>
+                <Typography variant="subtitle1">
+                  <strong>Animal:</strong>{' '}
+                  {animales.find((animal) => animal.id === citaData.animalId)?.nombre || 'N/A'}
+                </Typography>
+                <Typography variant="subtitle1">
+                  <strong>Fecha y Hora:</strong> {new Date(citaData.fechaCita).toLocaleString()}
+                </Typography>
+                <Typography variant="subtitle1">
+                  <strong>Motivo:</strong> {citaData.motivo}
+                </Typography>
+                <Typography variant="subtitle1">
+                  <strong>Veterinario:</strong> {citaData.veterinario}
+                </Typography>
+              </Box>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenSummary(false)} color="secondary">
+              Cancelar
+            </Button>
+            <Button onClick={confirmarCita} variant="contained" color="primary">
+              Confirmar Cita
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Paper>
     </Box>
   );
 }
