@@ -1,9 +1,11 @@
-import { useState } from 'react';
+// src/components/Auth/Login.tsx
+import { useState, useContext } from 'react';
 import api from '../../api/axios';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { FaUserAlt, FaLock, FaEnvelope } from 'react-icons/fa';
 import 'react-toastify/dist/ReactToastify.css';
+import { AuthContext } from '../Auth/AuthContext';
 
 interface AutenticacionResponseDto {
   userId: number;
@@ -14,6 +16,7 @@ function Login() {
   const [password, setPassword] = useState('');
   const [email, setEmail] = useState('');
   const navigate = useNavigate();
+  const { login } = useContext(AuthContext); // Obtiene la función login del contexto
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +33,8 @@ function Login() {
         throw new Error('ID de usuario no recibido.');
       }
 
-      localStorage.setItem('userId', userId.toString());
+      // Llama a la función login del contexto
+      login(userId.toString());
 
       toast.success('Inicio de sesión exitoso', {
         position: 'top-center',
