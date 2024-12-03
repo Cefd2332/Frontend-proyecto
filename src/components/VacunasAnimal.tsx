@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { parseISO, format } from 'date-fns';
@@ -19,7 +18,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { FaFilePdf, FaFileExcel } from 'react-icons/fa';
-import api from '../api/axios';
+import api from '../api/axios'; // Asegúrate de que 'api' tiene la URL base correcta
 
 interface Vacuna {
   id: number;
@@ -38,23 +37,34 @@ function VacunasAnimal() {
   const [agregando, setAgregando] = useState<boolean>(false);
   const [eliminando, setEliminando] = useState<number | null>(null);
 
-  const API_BASE_URL = api;
-
   useEffect(() => {
-    const fetchVacunas = async () => {
-      setLoading(true);
-      try {
-        if (!id || isNaN(Number(id))) throw new Error('ID de animal inválido.');
-        const res = await axios.get<Vacuna[]>(`${API_BASE_URL}/vacunas/animal/${id}`);
-        setVacunas(res.data);
-      } catch (error) {
-        toast.error('Error al obtener las vacunas.');
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchVacunas();
   }, [id]);
+
+  const fetchVacunas = async () => {
+    setLoading(true);
+    try {
+      if (!id || isNaN(Number(id))) throw new Error('ID de animal inválido.');
+      const res = await api.get(`/vacunas/animal/${id}`);
+      const data = res.data;
+      console.log('Respuesta de la API:', data);
+
+      // Verifica si 'data' es un arreglo
+      if (Array.isArray(data)) {
+        setVacunas(data);
+      } else {
+        // Manejo de error si 'data' no es un arreglo
+        toast.error('La respuesta de la API no es válida.');
+        setVacunas([]); // Opcionalmente, puedes asignar un arreglo vacío
+      }
+    } catch (error) {
+      console.error('Error al obtener las vacunas:', error);
+      toast.error('Error al obtener las vacunas.');
+      setVacunas([]); // Opcionalmente, puedes asignar un arreglo vacío
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     const hoy = new Date().toISOString().split('T')[0];
@@ -92,13 +102,14 @@ function VacunasAnimal() {
         animalId: parseInt(id!, 10),
       };
 
-      const res = await axios.post<Vacuna>(`${API_BASE_URL}/vacunas`, nuevaVacuna);
+      const res = await api.post<Vacuna>('/vacunas', nuevaVacuna);
       setVacunas([...vacunas, res.data]);
       setNombreSeleccionado('Vacuna Común');
       setNombrePersonalizado('');
       setFechaAplicacion(new Date().toISOString().split('T')[0]);
       toast.success('Vacuna agregada exitosamente.');
-    } catch {
+    } catch (error) {
+      console.error('Error al agregar la vacuna:', error);
       toast.error('Error al agregar la vacuna.');
     } finally {
       setAgregando(false);
@@ -109,10 +120,11 @@ function VacunasAnimal() {
     if (!window.confirm('¿Estás seguro de que deseas eliminar esta vacuna?')) return;
     setEliminando(idVacuna);
     try {
-      await axios.delete(`${API_BASE_URL}/vacunas/${idVacuna}`);
+      await api.delete(`/vacunas/${idVacuna}`);
       setVacunas(vacunas.filter((vacuna) => vacuna.id !== idVacuna));
       toast.success('Vacuna eliminada exitosamente.');
-    } catch {
+    } catch (error) {
+      console.error('Error al eliminar la vacuna:', error);
       toast.error('Error al eliminar la vacuna.');
     } finally {
       setEliminando(null);
