@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+// Elimina la importación de axios
+// import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { FaEdit } from 'react-icons/fa';
@@ -29,12 +30,13 @@ function EditAnimal() {
   const [adoptanteId, setAdoptanteId] = useState('');
   const [adoptantes, setAdoptantes] = useState<{ id: string; nombre: string }[]>([]);
 
-  const API_BASE_URL = api;
+  // Elimina la asignación de API_BASE_URL
+  // const API_BASE_URL = api;
 
   useEffect(() => {
     const fetchAnimalData = async () => {
       try {
-        const res = await axios.get<{
+        const res = await api.get<{
           nombre: string;
           especie: string;
           edad: number;
@@ -42,7 +44,7 @@ function EditAnimal() {
           estadoSalud: string;
           genero?: 'MACHO' | 'HEMBRA';
           adoptanteId?: string;
-        }>(`${API_BASE_URL}/animales/${id}`);
+        }>(`/animales/${id}`);
         const animal = res.data;
 
         setNombre(animal.nombre);
@@ -60,11 +62,21 @@ function EditAnimal() {
 
     const fetchAdoptantes = async () => {
       try {
-        const res = await axios.get<{ id: string; nombre: string }[]>(`${API_BASE_URL}/adoptantes`);
-        setAdoptantes(res.data);
+        const res = await api.get<{ id: string; nombre: string }[]>('/adoptantes');
+        const data = res.data;
+        console.log('Respuesta de la API (adoptantes):', data);
+
+        // Verifica si data es un arreglo
+        if (Array.isArray(data)) {
+          setAdoptantes(data);
+        } else {
+          toast.error('La respuesta de la API no es válida.');
+          setAdoptantes([]);
+        }
       } catch (error) {
         console.error('Error al cargar Clientes:', error);
         toast.error('Error al cargar Clientes.');
+        setAdoptantes([]);
       }
     };
 
@@ -88,7 +100,7 @@ function EditAnimal() {
         adoptanteId,
       };
 
-      await axios.put(`${API_BASE_URL}/animales/${id}`, updatedAnimal);
+      await api.put(`/animales/${id}`, updatedAnimal);
       toast.success('Animal actualizado exitosamente.');
       navigate('/dashboard');
     } catch (error) {
