@@ -95,6 +95,7 @@ function Dashboard() {
   const [animales, setAnimales] = useState<Animal[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchId, setSearchId] = useState<string>(''); // Nuevo estado para búsqueda por ID
   const [page, setPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState<number>(5);
   const [filters, setFilters] = useState({
@@ -166,7 +167,7 @@ function Dashboard() {
             adoptanteId: animal.adoptanteId ?? undefined,
           })),
         getComparator(order, orderBy as keyof Animal)
-      ).map((animal) =>
+      ).map(animal =>
         availableColumns
           .filter(col => selectedColumns.includes(col.id))
           .map(col => {
@@ -206,7 +207,7 @@ function Dashboard() {
           adoptanteId: animal.adoptanteId ?? undefined,
         })),
       getComparator(order, orderBy as keyof Animal)
-    ).forEach((animal) => {
+    ).forEach(animal => {
       content += availableColumns
         .filter(col => selectedColumns.includes(col.id))
         .map(col => {
@@ -233,6 +234,11 @@ function Dashboard() {
     setPage(0);
   };
 
+  const handleSearchIdChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setSearchId(event.target.value);
+    setPage(0);
+  };
+
   const handlePageChange = (_event: unknown, newPage: number) => {
     setPage(newPage);
   };
@@ -246,9 +252,9 @@ function Dashboard() {
     if (window.confirm('¿Estás seguro de que deseas eliminar este animal? Esta acción no se puede deshacer.')) {
       try {
         await api.delete(`/animales/${id}`);
-        setAnimales((prev) => prev.filter((animal) => animal.id !== id));
+        setAnimales(prev => prev.filter(animal => animal.id !== id));
         // También eliminar de la selección si estaba seleccionado
-        setSelectedAnimalIds((prev) => prev.filter(selectedId => selectedId !== id));
+        setSelectedAnimalIds(prev => prev.filter(selectedId => selectedId !== id));
         toast.success('Animal eliminado correctamente.');
       } catch (error) {
         console.error('Error al eliminar el animal', error);
@@ -260,7 +266,7 @@ function Dashboard() {
   const handleFilterChange = (event: SelectChangeEvent<string> | React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     // Si el filtro es 'genero', normalizar a minúsculas para consistencia
-    setFilters((prev) => ({
+    setFilters(prev => ({
       ...prev,
       [name as string]: name === 'genero' ? value.toLowerCase() : value,
     }));
@@ -274,10 +280,12 @@ function Dashboard() {
     const matchesGenero = genero ? (animal.genero ? animal.genero.toLowerCase() === genero : false) : true;
     const matchesEdadMin = edadMin ? animal.edad >= parseInt(edadMin, 10) : true;
     const matchesEdadMax = edadMax ? animal.edad <= parseInt(edadMax, 10) : true;
+    
+    // Búsqueda por nombre y por ID
     const matchesSearch =
       animal.nombre.toLowerCase().includes(searchQuery) ||
-      animal.especie.toLowerCase().includes(searchQuery) ||
-      animal.estadoSalud.toLowerCase().includes(searchQuery);
+      animal.id.toString().includes(searchId);
+    
     return matchesEspecie && matchesEstadoSalud && matchesGenero && matchesEdadMin && matchesEdadMax && matchesSearch;
   };
 
@@ -314,7 +322,7 @@ function Dashboard() {
 
   function handleTextFieldChange(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void {
     const { name, value } = e.target;
-    setFilters((prev) => ({
+    setFilters(prev => ({
       ...prev,
       [name]: value,
     }));
@@ -331,7 +339,7 @@ function Dashboard() {
   // Funciones para manejar la selección de animales
   const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.checked) {
-      const newSelecteds = filteredAnimals.map((animal) => animal.id);
+      const newSelecteds = filteredAnimals.map(animal => animal.id);
       setSelectedAnimalIds(newSelecteds);
       return;
     }
@@ -468,8 +476,8 @@ function Dashboard() {
               Limpiar Filtros
             </Button>
           </Box>
-          {/* Búsqueda Predictiva */}
-          <Box sx={{ marginBottom: 2 }}>
+          {/* Búsqueda Predictiva por Nombre */}
+          <Box sx={{ marginBottom: 2, display: 'flex', gap: 2 }}>
             <Autocomplete
               freeSolo
               options={animales.map(animal => animal.nombre)}
@@ -479,8 +487,37 @@ function Dashboard() {
                   {...params}
                   label="Buscar por nombre"
                   variant="outlined"
+                  // Añadir condición para mostrar sugerencias solo cuando haya texto
+                  InputProps={{
+                    ...params.InputProps,
+                    endAdornment: (
+                      <>
+                        {params.InputProps.endAdornment}
+                      </>
+                    ),
+                  }}
                 />
               )}
+              // No abrir el dropdown automáticamente cuando el campo está vacío
+              filterOptions={(options, { inputValue }) => {
+                if (inputValue === '') {
+                  return [];
+                }
+                return options;
+              }}
+            />
+            {/* Nuevo Campo de Búsqueda por ID */}
+            <TextField
+              label="Buscar por ID"
+              variant="outlined"
+              type="number"
+              value={searchId}
+              onChange={handleSearchIdChange}
+              sx={{ width: 200 }}
+              InputProps={{
+                startAdornment: <FaFilePdf className="mr-2 text-gray-400" />,
+              }}
+              placeholder="Ingrese ID"
             />
           </Box>
           {loading ? (
@@ -570,7 +607,7 @@ function Dashboard() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {paginatedAnimals.map((animal) => {
+                    {paginatedAnimals.map(animal => {
                       const isItemSelected = isSelected(animal.id);
                       return (
                         <TableRow
