@@ -40,6 +40,10 @@ function Layout() {
           overflow: 'hidden', // Ocultar contenido excedente
           '&:hover': {
             width: '180px', // Ancho expandido al pasar el cursor
+            // Mostrar todos los títulos cuando el menú se expande
+            '& .menu-title': {
+              opacity: 1,
+            },
           },
           // Cursor de pointer para indicar interactividad
           cursor: 'pointer',
@@ -56,9 +60,7 @@ function Layout() {
             paddingY: 1,
             textDecoration: 'none', // Sin subrayado
             color: 'inherit', // Heredar el color gris
-            '&:hover .menu-title': {
-              opacity: 1, // Mostrar títulos al pasar el cursor
-            },
+            // Ya no es necesario cambiar la opacidad aquí
           }}
         >
           <FaPaw size={24} style={{ flexShrink: 0 }} /> {/* Icono siempre visible */}
@@ -87,9 +89,7 @@ function Layout() {
             paddingY: 1,
             textDecoration: 'none',
             color: 'inherit',
-            '&:hover .menu-title': {
-              opacity: 1,
-            },
+            // Ya no es necesario cambiar la opacidad aquí
           }}
         >
           <FaUsers size={24} style={{ flexShrink: 0 }} /> {/* Icono siempre visible */}
@@ -97,10 +97,10 @@ function Layout() {
             className="menu-title"
             sx={{
               marginLeft: 2,
-              opacity: 0,
-              transition: 'opacity 0.3s ease-in-out',
-              whiteSpace: 'nowrap',
-              color: 'gray',
+              opacity: 0, // Oculto inicialmente
+              transition: 'opacity 0.3s ease-in-out', // Transición suave
+              whiteSpace: 'nowrap', // Prevenir corte de texto
+              color: 'gray', // Color gris para el título
             }}
           >
             Clientes
@@ -118,9 +118,7 @@ function Layout() {
             paddingY: 1,
             textDecoration: 'none',
             color: 'inherit',
-            '&:hover .menu-title': {
-              opacity: 1,
-            },
+            // Ya no es necesario cambiar la opacidad aquí
           }}
         >
           <FaEnvelope size={24} style={{ flexShrink: 0 }} /> {/* Icono siempre visible */}
@@ -128,10 +126,10 @@ function Layout() {
             className="menu-title"
             sx={{
               marginLeft: 2,
-              opacity: 0,
-              transition: 'opacity 0.3s ease-in-out',
-              whiteSpace: 'nowrap',
-              color: 'gray',
+              opacity: 0, // Oculto inicialmente
+              transition: 'opacity 0.3s ease-in-out', // Transición suave
+              whiteSpace: 'nowrap', // Prevenir corte de texto
+              color: 'gray', // Color gris para el título
             }}
           >
             Agendar Cita
@@ -149,9 +147,7 @@ function Layout() {
             paddingY: 1,
             textDecoration: 'none',
             color: 'inherit',
-            '&:hover .menu-title': {
-              opacity: 1,
-            },
+            // Ya no es necesario cambiar la opacidad aquí
           }}
         >
           <FaCalendarAlt size={24} style={{ flexShrink: 0 }} /> {/* Icono siempre visible */}
@@ -159,10 +155,10 @@ function Layout() {
             className="menu-title"
             sx={{
               marginLeft: 2,
-              opacity: 0,
-              transition: 'opacity 0.3s ease-in-out',
-              whiteSpace: 'nowrap',
-              color: 'gray',
+              opacity: 0, // Oculto inicialmente
+              transition: 'opacity 0.3s ease-in-out', // Transición suave
+              whiteSpace: 'nowrap', // Prevenir corte de texto
+              color: 'gray', // Color gris para el título
             }}
           >
             Calendario
@@ -183,9 +179,7 @@ function Layout() {
             paddingY: 1,
             textDecoration: 'none',
             color: 'inherit',
-            '&:hover .menu-title': {
-              opacity: 1,
-            },
+            // Ya no es necesario cambiar la opacidad aquí
           }}
         >
           <FaUserCircle size={24} style={{ flexShrink: 0 }} /> {/* Icono siempre visible */}
@@ -193,10 +187,10 @@ function Layout() {
             className="menu-title"
             sx={{
               marginLeft: 2,
-              opacity: 0,
-              transition: 'opacity 0.3s ease-in-out',
-              whiteSpace: 'nowrap',
-              color: 'gray',
+              opacity: 0, // Oculto inicialmente
+              transition: 'opacity 0.3s ease-in-out', // Transición suave
+              whiteSpace: 'nowrap', // Prevenir corte de texto
+              color: 'gray', // Color gris para el título
             }}
           >
             Perfil
@@ -211,9 +205,7 @@ function Layout() {
             width: '100%',
             paddingY: 1,
             cursor: 'pointer',
-            '&:hover .menu-title': {
-              opacity: 1,
-            },
+            // Ya no es necesario cambiar la opacidad aquí
           }}
           onClick={handleLogout}
         >
@@ -222,10 +214,10 @@ function Layout() {
             className="menu-title"
             sx={{
               marginLeft: 2,
-              opacity: 0,
-              transition: 'opacity 0.3s ease-in-out',
-              whiteSpace: 'nowrap',
-              color: 'gray',
+              opacity: 0, // Oculto inicialmente
+              transition: 'opacity 0.3s ease-in-out', // Transición suave
+              whiteSpace: 'nowrap', // Prevenir corte de texto
+              color: 'gray', // Color gris para el título
             }}
           >
             Cerrar Sesión
