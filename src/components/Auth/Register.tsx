@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify'; 
 import 'react-toastify/dist/ReactToastify.css';
 import { FaUserAlt, FaEnvelope, FaHome, FaLock } from 'react-icons/fa';
+import { Typography } from '@mui/material';
 
 function Register() {
   const [nombre, setNombre] = useState('');
@@ -14,6 +15,7 @@ function Register() {
   const navigate = useNavigate();
 
   const handleRegister = async () => {
+    // Validación de correo electrónico
     if (!validateEmail(email)) {
       toast.error('Por favor ingresa un correo válido.', {
         position: 'top-center',
@@ -22,6 +24,16 @@ function Register() {
       return;
     }
 
+    // Validación de longitud de la contraseña
+    if (password.length < 8) {
+      toast.error('La contraseña debe tener al menos 8 caracteres.', {
+        position: 'top-center',
+        autoClose: 4000,
+      });
+      return;
+    }
+
+    // Validación de confirmación de contraseña
     if (password !== confirmPassword) {
       toast.error('Las contraseñas no coinciden.', {
         position: 'top-center',
@@ -159,8 +171,13 @@ function Register() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                minLength={8} // Asegura a nivel de HTML que la contraseña tenga al menos 8 caracteres
               />
             </div>
+            {/* Mensaje de ayuda para la contraseña */}
+            <Typography variant="caption" className="text-gray-500">
+              La contraseña debe tener al menos 8 caracteres.
+            </Typography>
           </div>
 
           {/* Campo de confirmación de contraseña */}
@@ -175,6 +192,7 @@ function Register() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
+                minLength={8} // Asegura a nivel de HTML que la confirmación tenga al menos 8 caracteres
               />
             </div>
           </div>
