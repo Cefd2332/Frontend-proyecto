@@ -408,7 +408,7 @@ function Dashboard() {
               <Select
                 name="estadoSalud"
                 value={filters.estadoSalud}
-                label="Estado de Salud"
+                label="Estado"
                 onChange={handleFilterChange}
               >
                 <MenuItem value="">
