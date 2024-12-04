@@ -404,7 +404,7 @@ function Dashboard() {
               </Select>
             </FormControl>
             <FormControl sx={{ minWidth: 150 }}>
-              <InputLabel>Estado de Salud</InputLabel>
+              <InputLabel>Estado</InputLabel>
               <Select
                 name="estadoSalud"
                 value={filters.estadoSalud}
