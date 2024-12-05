@@ -7,6 +7,7 @@ import { toast } from 'react-toastify';
 import { FaUserAlt, FaLock, FaEnvelope, FaHome } from 'react-icons/fa';
 import 'react-toastify/dist/ReactToastify.css';
 import { AuthContext } from './AuthContext';
+
 interface AutenticacionResponseDto {
   userId: number;
 }
@@ -172,7 +173,7 @@ function Auth() {
           onClick={() => setActiveForm('login')}
           className={`flex-1 p-8 transition-colors duration-500 cursor-pointer ${
             activeForm === 'login'
-              ? 'bg-blue-300 text-white'
+              ? 'bg-blue-400 text-white'
               : 'bg-gray-100 text-gray-700 hover:bg-blue-200'
           }`}
         >
@@ -233,15 +234,6 @@ function Auth() {
               Iniciar Sesión
             </button>
           </form>
-          <p className="mt-4 text-center">
-            ¿No tienes una cuenta?{' '}
-            <button
-              onClick={() => setActiveForm('register')}
-              className="text-blue-400 hover:text-blue-300 font-semibold"
-            >
-              Regístrate aquí
-            </button>
-          </p>
         </div>
 
         {/* Sección de Register */}
@@ -249,7 +241,7 @@ function Auth() {
           onClick={() => setActiveForm('register')}
           className={`flex-1 p-8 transition-colors duration-500 cursor-pointer ${
             activeForm === 'register'
-              ? 'bg-blue-300 text-white'
+              ? 'bg-blue-400 text-white'
               : 'bg-gray-100 text-gray-700 hover:bg-blue-200'
           }`}
         >
@@ -345,15 +337,6 @@ function Auth() {
               Registrarse
             </button>
           </form>
-          <p className="mt-4 text-center">
-            ¿Ya tienes una cuenta?{' '}
-            <button
-              onClick={() => setActiveForm('login')}
-              className="text-blue-400 hover:text-blue-300 font-semibold"
-            >
-              Inicia Sesión aquí
-            </button>
-          </p>
         </div>
       </div>
     </div>
