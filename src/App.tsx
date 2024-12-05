@@ -1,7 +1,6 @@
 // src/App.tsx
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Login from './components/Auth/Login';
-import Register from './components/Auth/Register';
+
 import Dashboard from './components/Dashboard';
 import RegistrarAnimal from './components/RegistrarAnimal';
 import HistorialAnimal from './components/HistorialAnimal';
@@ -17,6 +16,7 @@ import Layout from './components/Layout'; // Importamos el Layout
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Perfil from './components/Perfil';
+import Auth from './components/Auth/Auth';
 import Logout from './components/Logout'; // Importamos el componente Logout
 import NotFound from './components/404'; // Importamos el componente NotFound
 import PrivateRoute from './components/PrivateRoute'; // Importa PrivateRoute
@@ -30,8 +30,8 @@ function App() {
         <div className="App">
           <Routes>
             {/* Rutas sin NavBar */}
-            <Route path="/" element={<Login />} />
-            <Route path="/register" element={<Register />} />
+            <Route path="/" element={<Auth />} />
+            
 
             {/* Rutas con NavBar utilizando el Layout y PrivateRoute */}
             <Route
