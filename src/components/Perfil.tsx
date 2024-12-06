@@ -3,20 +3,17 @@
 import { useState, useEffect } from 'react';
 import api from '../api/axios';
 import { toast } from 'react-toastify';
-import { FaLock, FaUser } from 'react-icons/fa';
+import { FaUser } from 'react-icons/fa';
 import { UsuarioResponseDto } from '../types/UsuarioResponseDto';
 
 function Perfil() {
-  const [activeTab, setActiveTab] = useState('perfil');
+  const [activeTab, setActiveTab] = useState<'perfil' | null>('perfil');
   const [profile, setProfile] = useState<UsuarioResponseDto | null>(null);
   const [formValues, setFormValues] = useState({
     nombre: '',
     email: '',
     direccion: '',
   });
-  const [passwordActual, setPasswordActual] = useState('');
-  const [nuevaPassword, setNuevaPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
 
   const userId = localStorage.getItem('userId');
 
@@ -81,38 +78,17 @@ function Perfil() {
         },
       });
 
-      setProfile(res.data as UsuarioResponseDto);
-      setFormValues(res.data as { nombre: string; email: string; direccion: string });
+      const data = res.data as UsuarioResponseDto;
+      setProfile(data);
+      setFormValues({
+        nombre: data.nombre,
+        email: data.email,
+        direccion: data.direccion,
+      });
       toast.success('Perfil actualizado correctamente.');
     } catch (error: any) {
       toast.error(
         error.response?.data?.message || 'Error al actualizar el perfil.'
-      );
-    }
-  };
-
-  const handleCambiarContrasena = async () => {
-    if (!passwordActual || !nuevaPassword || !confirmPassword) {
-      toast.error('Por favor, completa todos los campos de contraseña.');
-      return;
-    }
-    if (nuevaPassword !== confirmPassword) {
-      toast.error('La nueva contraseña y su confirmación no coinciden.');
-      return;
-    }
-    try {
-      await api.put(`/usuarios/perfil/cambiar-contrasena`, {
-        contrasenaActual: passwordActual,
-        nuevaContrasena: nuevaPassword,
-        usuarioId: Number(userId),
-      });
-      setPasswordActual('');
-      setNuevaPassword('');
-      setConfirmPassword('');
-      toast.success('Contraseña cambiada correctamente.');
-    } catch (error: any) {
-      toast.error(
-        error.response?.data?.message || 'Error al cambiar la contraseña.'
       );
     }
   };
@@ -133,22 +109,11 @@ function Perfil() {
             activeTab === 'perfil'
               ? 'bg-[#0288D1] text-white'
               : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-          } rounded flex items-center space-x-2`}
+          } rounded flex items-center space-x-2 transition-colors duration-300`}
           onClick={() => setActiveTab('perfil')}
         >
           <FaUser />
           <span>Información del Perfil</span>
-        </button>
-        <button
-          className={`py-2 px-4 ${
-            activeTab === 'seguridad'
-              ? 'bg-[#0288D1] text-white'
-              : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-          } rounded flex items-center space-x-2`}
-          onClick={() => setActiveTab('seguridad')}
-        >
-          <FaLock />
-          <span>Seguridad</span>
         </button>
       </div>
 
@@ -164,7 +129,7 @@ function Perfil() {
               value={formValues.nombre}
               placeholder="Nombre"
               onChange={handleInputChange}
-              className="p-3 border rounded w-full"
+              className="p-3 border rounded w-full focus:ring-2 focus:ring-[#0288D1] focus:outline-none"
             />
             <input
               type="email"
@@ -172,7 +137,7 @@ function Perfil() {
               value={formValues.email}
               placeholder="Email"
               onChange={handleInputChange}
-              className="p-3 border rounded w-full"
+              className="p-3 border rounded w-full focus:ring-2 focus:ring-[#0288D1] focus:outline-none"
             />
             <input
               type="text"
@@ -180,51 +145,13 @@ function Perfil() {
               value={formValues.direccion}
               placeholder="Dirección"
               onChange={handleInputChange}
-              className="p-3 border rounded w-full"
+              className="p-3 border rounded w-full focus:ring-2 focus:ring-[#0288D1] focus:outline-none"
             />
             <button
               onClick={handleActualizarPerfil}
-              className="w-full py-3 px-4 bg-[#0288D1] text-white rounded hover:bg-[#0277BD]"
+              className="w-full py-3 px-4 bg-[#0288D1] text-white rounded hover:bg-[#0277BD] transition-colors duration-300"
             >
               Actualizar
-            </button>
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'seguridad' && (
-        <div>
-          <h2 className="text-xl font-semibold text-gray-700 mb-4 flex items-center space-x-2">
-            <FaLock className="text-gray-600" />
-            <span>Cambiar Contraseña</span>
-          </h2>
-          <div className="flex flex-col space-y-4">
-            <input
-              type="password"
-              placeholder="Contraseña Actual"
-              value={passwordActual}
-              onChange={(e) => setPasswordActual(e.target.value)}
-              className="p-3 border rounded w-full"
-            />
-            <input
-              type="password"
-              placeholder="Nueva Contraseña"
-              value={nuevaPassword}
-              onChange={(e) => setNuevaPassword(e.target.value)}
-              className="p-3 border rounded w-full"
-            />
-            <input
-              type="password"
-              placeholder="Confirmar Nueva Contraseña"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="p-3 border rounded w-full"
-            />
-            <button
-              onClick={handleCambiarContrasena}
-              className="w-full py-3 px-4 bg-[#0288D1] text-white rounded hover:bg-[#0277BD]"
-            >
-              Cambiar Contraseña
             </button>
           </div>
         </div>
